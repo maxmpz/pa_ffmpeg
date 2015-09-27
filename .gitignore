@@ -1,0 +1,10 @@
+/*.externalToolBuilders
+/*.settings
+/*.DS_Store
+/*.project
+gen/*.d
+bin/**
+obj/**
+libs/**
+*.pc
+mods
