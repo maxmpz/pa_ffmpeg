@@ -1,0 +1,6 @@
+/addr2line.sh
+*.log
+*.fate
+/build-d16.sh
+/list-all.sh
+/listobj.sh

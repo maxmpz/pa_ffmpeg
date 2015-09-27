@@ -1,0 +1,27 @@
+FFMpeg Poweramp changes and building
+
+#define REDUCED_AUDIO_BUILD
+This enables partial build of ffmpeg:
+- various video APIs disabled (including structures changes, this makes ffmpeg .so not binary compatible)
+- some unnecessary static data and calculations are skept
+- some codec parts are disabled
+- image processing removed
+
+#define REDUCED_TAGS_BUILD
+- unnecessary tag parsing is disabled
+
+Build process.
+
+$ export ANDROID_NDK=your ndk dir (android-r10e+)
+$ cd audioplayer_ffmpeg_swresample/jni
+$ ./build-neon.sh
+$ cd ../../jni
+$ ./build-neon.sh
+
+Poweramp has "overriden" c/S files in /jni. Still, .h files can't be overriden this way, thus, they are kept both in jni and should be copied over the ffmpeg tree
+FFmpeg configure basically works as intended, except external libraries detection (doesn't work currently, no pkg-config in ndk and/or it seems that crosscompile libs
+not necessarily easily configured this way anyway). External library config variables are enabled in per-build config scripts (config.h/config.mak from config-pamp.h/config-pamp.mak).
+
+Os vs O3 + neon tree
+- mp3 - benifits from local O3 by realtime .3%
+- aac - no dif

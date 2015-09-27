@@ -1,0 +1,89 @@
+{
+	global:
+		JNI_On*;
+		
+		ff_aac_decoder;
+		ff_ape_decoder;
+		ff_mp3float_decoder;
+		ff_mp2float_decoder;
+		ff_mp3adufloat_decoder;
+		ff_mp3on4float_decoder;
+		ff_flv_demuxer;
+		
+		avcodec_find_decoder;
+		avcodec_open2;
+		av_dump_format;
+		av_log;
+		av_get_profile_name;
+		av_malloc;
+		av_freep;
+		av_dict_get;
+		av_rescale_q;
+		av_strerror;
+		av_get_default_channel_layout;
+		avformat_open_input;
+		avformat_find_stream_info;
+		avformat_alloc_context;
+		avformat_close_input;
+		avcodec_close;
+		av_read_frame;
+		av_read_pause;
+		av_read_play;
+		av_init_packet;
+		av_dup_packet;
+		av_free_packet;
+		av_sample_fmt_is_planar;
+		av_get_bytes_per_sample;
+		avcodec_decode_audio4;
+		av_frame_unref;
+		av_seek_frame;
+		ff_update_cur_dts;
+		avcodec_flush_buffers;
+		av_register_all;
+		av_log_set_callback;
+		av_rescale_rnd;
+		av_samples_alloc;
+		av_get_channel_layout_nb_channels;
+		av_assert1;
+		av_assert0;
+		av_strstart;
+		av_stristr;
+		avio_size;
+
+		swri_oldapi_conv_flt_to_s16_neon;
+		swr_alloc;		
+		swr_free;
+		swr_init;
+		swr_get_delay;
+		swr_convert;
+		swr_drop_output;
+		
+		av_rdft_end;
+		av_rdft_init;
+		av_rdft_calc;
+		av_log2;
+		av_log_set_level;
+		
+		av_lfg_init;
+		frandom;
+		
+		avresample_free;
+		av_opt_set_int;
+		avresample_open;
+		avresample_close;
+		avresample_alloc_context;
+		avresample_convert;
+		avresample_available;
+		avresample_read;
+		avresample_get_delay;
+		
+		tta_open_read;
+		tta_decoder_new;
+		tta_decoder_init_get_info;
+		tta_decoder_get_error;
+		tta_decoder_process_stream;
+		tta_decoder_set_position;
+		tta_decoder_done;
+	
+	local: *;
+};

@@ -1,0 +1,1 @@
+CONFIG_LIBSOXR=yes
