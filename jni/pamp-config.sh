@@ -1,8 +1,8 @@
 #!/bin/sh
 
 FFMPEG_PATH=../FFmpeg
-NDK_PATH=/opt/android-ndk-r10d
-PLATFORM=$NDK_PATH/platforms/android-14/arch-arm
+NDK_PATH=/opt/android-ndk-r10e
+PLATFORM=$NDK_PATH/platforms/android-19/arch-arm
 GCC_VER=4.9
 EABI=arm-linux-androideabi-4.9
 PREBUILT=$NDK_PATH/toolchains/$EABI/prebuilt/darwin-x86_64
@@ -34,17 +34,6 @@ $ARM_FF_FLAGS \
 
 D16_CONFIG="--disable-neon $NEON_AND_D16_CONFIG -mfpu=vfpv3-d16 \""
 NEON_CONFIG="$NEON_AND_D16_CONFIG -mfpu=neon \""
-
-LOWEND_CONFIG="--cpu=armv6 \
---disable-vfp \
---disable-neon \
---enable-decoder=mp3 \
---extra-cflags=\"-DANDROID --sysroot=$PLATFORM -MMD -MP -ffunction-sections \
--funwind-tables -fstack-protector -D__ARM_ARCH_5__ -D__ARM_ARCH_5T__ -D__ARM_ARCH_5E__ -D__ARM_ARCH_5TE__ \
--Wno-psabi -mtune=xscale -msoft-float -fomit-frame-pointer -fstrict-aliasing -funswitch-loops -finline-limit=300 \
--std=c99 -Wno-sign-compare -Wno-switch -Wno-pointer-sign -ffast-math -mno-thumb-interwork \
--march=armv6 -mno-unaligned-access -Wa,--noexecstack -I$PLATFORM/arch-arm/usr/include -O0 \" "
-
 
 LDFLAGS="--sysroot=$PLATFORM \
 -Wl,--no-whole-archive $PREBUILT/lib/gcc/arm-linux-androideabi/$GCC_VER/libgcc.a \
@@ -230,13 +219,6 @@ $FFMPEG_PATH/configure --target-os=linux \
 
 cp $FFMPEG_PATH/config.h $FFMPEG_PATH/config.old.h
 rm -f $FFMPEG_PATH/config.h
-
-#eval "$COMMON_CONFIG $LOWEND_CONFIG"
-#if [ $? -ne 0 ]; then
-#	exit 1
-#fi
-#cp config.h $FFMPEG_PATH/config-lowend.h
-#cp config.mak $FFMPEG_PATH/config-lowend.mak
 
 #eval "$COMMON_CONFIG $D16_CONFIG"
 #if [ $? -ne 0 ]; then
