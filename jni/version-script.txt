@@ -49,6 +49,7 @@
 		av_strstart;
 		av_stristr;
 		avio_size;
+		av_base64_decode;
 
 		swri_oldapi_conv_flt_to_s16_neon;
 		swr_alloc;		

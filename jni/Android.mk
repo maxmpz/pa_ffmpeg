@@ -125,14 +125,14 @@ FFMPEG_ROOT := ../ffmpeg
 JNI_ROOT := $(LOCAL_PATH)
 
 
-#pamp-install-custom: installed_modules
-#	@echo "Pamp Copy : $(PAMP_SRC) => $(PAMP_DST)"
-#	$(hide) cp $(PAMP_SRC) $(PAMP_DST) 
-#
+pamp-install-custom: installed_modules
+	@echo "Pamp Copy : $(PAMP_SRC) => $(PAMP_DST)"
+	$(hide) cp $(PAMP_SRC) $(PAMP_DST) 
+
 include $(BUILD_SHARED_LIBRARY)
-#
+
 #ALL_SHARED_LIBRARIES += pamp-install-custom
-#all: installed_modules host_libraries host_executables pamp-install-custom 
+all: pamp-install-custom 
 
 # =================================================
 include $(CLEAR_VARS)
