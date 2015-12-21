@@ -1,4 +1,3 @@
-
 # This doesn't properly work due to FFMPEG config variables conflicts. Use separate "ndk-build APP_ABI=armeabi" and "ndk-build APP_ABI=armeabi-v7a".
 #APP_ABI := armeabi-v7a armeabi
 
