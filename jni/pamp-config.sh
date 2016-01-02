@@ -113,6 +113,7 @@ $FFMPEG_PATH/configure --target-os=linux \
 --enable-demuxer=tak \
 --enable-demuxer=dsf \
 --enable-demuxer=iff \
+--enable-demuxer=matroska \
 \
 --enable-decoder=mpc7 \
 --enable-decoder=mpc8 \

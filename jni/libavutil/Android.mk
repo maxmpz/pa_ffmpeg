@@ -9,7 +9,6 @@ LOCAL_OBJS_TO_REMOVE := \
        tree.o                                                           \
 		aes.o                                                            \
        blowfish.o                                                       \
-       lzo.o                                                            \
        lls.o                                                            \
 		cast5.o \
 		ripemd.o \
@@ -28,6 +27,7 @@ LOCAL_OBJS_TO_REMOVE := \
 #		fixed_dsp.o \
 		imgutils.o                                                       \
        pixdesc.o                                                        \
+       lzo.o                                                            \
 		
 
 #LOCAL_USE_LOCAL_MAKEFILE := yes
