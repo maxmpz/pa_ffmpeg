@@ -17,7 +17,7 @@
 		av_get_profile_name;
 		av_malloc;
 		av_freep;
-		av_dict_get;
+		av_dict_*;
 		av_rescale_q;
 		av_strerror;
 		av_get_default_channel_layout;
