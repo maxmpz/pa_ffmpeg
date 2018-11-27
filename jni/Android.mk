@@ -3,6 +3,8 @@
 LOCAL_PATH := $(call my-dir)
 GLOBAL_PATH := $(call my-dir)
 
+USE_VERSION := #yes # Enables build.version based versioning. Ffmpeg requires this to be insync
+
 include $(LOCAL_PATH)/config-pamp.mak
 
 GLOBAL_FLTO := false # NOTE: flto doesn't work with ffmpeg properly (28-05-2014, gcc 4.9/NDK 10e) 
@@ -18,6 +20,12 @@ GLOBAL_CFLAGS += -DPAMP_CONFIG_NO_TAGS=1 -DPAMP_FFMPEG_STUBS=0
 #GLOBAL_CFLAGS += -fprofile-use=../../profile -fprofile-correction
 
 # REVISIT:-mno-unaligned-access  - probably not needed
+
+audioplayer_PATH := $(abspath $(LOCAL_PATH)/../../audioplayer/)
+
+ifeq ($(USE_VERSION),yes)
+include $(audioplayer_PATH)/build.num # build.number=xxx => $(build.number)
+endif
 
 ifeq ($(TARGET_ARCH_ABI),armeabi-v7a-hard) # HARD
 	GLOBAL_CFLAGS += -march=armv7-a -mtune=cortex-a9 -mno-thumb-interwork -mfloat-abi=hard -mhard-float -D_NDK_MATH_NO_SOFTFP=1 
@@ -96,7 +104,11 @@ LOCAL_LDLIBS += -llog -lz
 
 LOCAL_WHOLE_STATIC_LIBRARIES := libavformat libavutil libsoxr-prebuilt libswresample-prebuilt libavcodec  #libtta #libjni
 
+ifeq ($(USE_VERSION),yes)
+LOCAL_MODULE := libffmpeg_$(GLOBAL_ARCH_MODE).$(build.number)
+else
 LOCAL_MODULE := libffmpeg_$(GLOBAL_ARCH_MODE)
+endif 
 
 #LOCAL_SHARED_LIBRARIES := libopus-prebuilt 
 
@@ -117,8 +129,18 @@ endif
 cmd-strip = $(TOOLCHAIN_PREFIX)strip -g -S -d --strip-debug --strip-unneeded --discard-all -R .comment $1
 endif
 
-LIBS_CUSTOM_PATH := $(abspath $(LOCAL_PATH)/../../audioplayer/libs/$(GLOBAL_TARGET_ARCH_NAME))
-PAMP_DST := $(LIBS_CUSTOM_PATH)/$(LOCAL_MODULE)$(LIB_POSTFIX).so
+LIBS_CUSTOM_PATH := $(audioplayer_PATH)/libs/$(GLOBAL_TARGET_ARCH_NAME)
+
+ifeq ($(USE_VERSION),yes)
+PAMP_DST_BASE := $(LIBS_CUSTOM_PATH)/$(subst .$(build.number),,$(LOCAL_MODULE))
+PAMP_DST := $(PAMP_DST_BASE).$(build.number).so
+else
+PAMP_DST_BASE := $(LIBS_CUSTOM_PATH)/$(LOCAL_MODULE)
+PAMP_DST := $(PAMP_DST_BASE).so
+endif
+
+PAMP_DST_CLEAN := $(PAMP_DST_BASE).*
+
 PAMP_SRC := $(abspath $(LOCAL_PATH)/../libs/$(GLOBAL_TARGET_ARCH_NAME)/$(LOCAL_MODULE).so)
 
 FFMPEG_ROOT := ../ffmpeg
@@ -126,7 +148,9 @@ JNI_ROOT := $(LOCAL_PATH)
 
 
 pamp-install-custom: installed_modules
-	@echo "Pamp Copy : $(PAMP_SRC) => $(PAMP_DST)"
+	@echo "Clean: $(PAMP_DST_CLEAN)"
+	$(hide) rm -f $(PAMP_DST_CLEAN)
+	@echo "Copy : $(PAMP_SRC) => $(PAMP_DST)"
 	$(hide) cp $(PAMP_SRC) $(PAMP_DST) 
 
 include $(BUILD_SHARED_LIBRARY)
