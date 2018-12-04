@@ -13,13 +13,13 @@ LOCAL_OBJS_TO_REMOVE := \
 	oggparsespeex.o  \
 	oggparsetheora.o \
 	oggparsevp8.o \
-	flac_picture.o \
 	img2.o \
 	avlanguage.o \
 	mux.o \
 	replaygain.o \
+	flac_picture.o \
 	
- 
+	
 # \
 #img2.o \
 #        mux.o                \
