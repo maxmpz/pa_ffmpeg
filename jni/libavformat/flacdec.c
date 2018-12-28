@@ -129,9 +129,11 @@ static int flac_read_header(AVFormatContext *s)
 
             /* STREAMINFO can only occur once */
             if (found_streaminfo) {
-                RETURN_ERROR(AVERROR_INVALIDDATA);
+            	DLOG("%s found_streaminfo=>AVERROR_INVALIDDATA", __FUNC__);
+                //RETURN_ERROR(AVERROR_INVALIDDATA); // MaxMP: don't do anything - there are files like that in the wild
             }
             if (metadata_size != FLAC_STREAMINFO_SIZE) {
+            	DLOG("%s metadata_size=%d != FLAC_STREAMINFO_SIZE=%d", __FUNC__, metadata_size, FLAC_STREAMINFO_SIZE);
                 RETURN_ERROR(AVERROR_INVALIDDATA);
             }
             found_streaminfo = 1;
@@ -156,15 +158,21 @@ static int flac_read_header(AVFormatContext *s)
             uint64_t start;
             const uint8_t *offset;
             int i, chapters, track, ti;
-            if (metadata_size < 431)
+            if (metadata_size < 431) {
+            	DLOG("%s metadata_size=%d  < 431", __FUNC__, metadata_size);
                 RETURN_ERROR(AVERROR_INVALIDDATA);
+            }
             offset = buffer + 395;
             chapters = bytestream_get_byte(&offset) - 1;
-            if (chapters <= 0)
-                RETURN_ERROR(AVERROR_INVALIDDATA);
+            if (chapters <= 0) {
+                DLOG("%s chapters=%d <=0", __FUNC__, chapters);
+            	RETURN_ERROR(AVERROR_INVALIDDATA);
+            }
             for (i = 0; i < chapters; i++) {
-                if (offset + 36 - buffer > metadata_size)
+                if (offset + 36 - buffer > metadata_size) {
+                	DLOG("%s offset + 36 - buffer=%d > metadata_size=%d", __FUNC__, offset + 36 - buffer, metadata_size);
                     RETURN_ERROR(AVERROR_INVALIDDATA);
+                }
                 start = bytestream_get_be64(&offset);
                 track = bytestream_get_byte(&offset);
                 bytestream_get_buffer(&offset, isrc, 12);
