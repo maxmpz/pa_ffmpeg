@@ -137,6 +137,7 @@ $FFMPEG_PATH/configure --target-os=linux \
 \
 --enable-decoder=pcm_s8 \
 --enable-decoder=pcm_s8_planar \
+--enable-decoder=pcm_u8 \
 --enable-decoder=pcm_s16be \
 --enable-decoder=pcm_s16le \
 --enable-decoder=pcm_u16be \
@@ -160,36 +161,47 @@ $FFMPEG_PATH/configure --target-os=linux \
 --enable-decoder=pcm_s32le_planar \
 --enable-decoder=pcm_alaw \
 --enable-decoder=pcm_mulaw \
---enable-decoder=adpcm_ms \
---enable-decoder=adpcm_g726 \
+--enable-decoder=pcm_zork \
+--enable-decoder=pcm_bluray \
+--enable-decoder=pcm_lxf \
+--enable-decoder=pcm_dvd \
+\
 --enable-decoder=gsm \
 --enable-decoder=gsm_ms \
---enable-decoder=adpcm_ima_qt \
---enable-decoder=adpcm_4xm \
---enable-decoder=adpcm_adx \
---enable-decoder=adpcm_ct \
---enable-decoder=adpcm_ea \
+\
+--enable-decoder=adpcm_4xm	 \
+--enable-decoder=adpcm_adx	 \
+--enable-decoder=adpcm_afc	 \
+--enable-decoder=adpcm_ct	 \
+--enable-decoder=adpcm_dtk	 \
+--enable-decoder=adpcm_ea	 \
 --enable-decoder=adpcm_ea_maxis_xa \
---enable-decoder=adpcm_ea_r1 \
---enable-decoder=adpcm_ea_r2 \
---enable-decoder=adpcm_ea_r3 \
+--enable-decoder=adpcm_ea_r1	 \
+--enable-decoder=adpcm_ea_r2	 \
+--enable-decoder=adpcm_ea_r3	 \
 --enable-decoder=adpcm_ea_xas \
+--enable-decoder=adpcm_g722	 \
+--enable-decoder=adpcm_g726	 \
+--enable-decoder=adpcm_g726le \
+--enable-decoder=g723_1 \
+--enable-decoder=g729 \
 --enable-decoder=adpcm_ima_amv \
+--enable-decoder=adpcm_ima_apc \
 --enable-decoder=adpcm_ima_dk3 \
 --enable-decoder=adpcm_ima_dk4 \
 --enable-decoder=adpcm_ima_ea_eacs \
 --enable-decoder=adpcm_ima_ea_sead \
 --enable-decoder=adpcm_ima_iss \
+--enable-decoder=adpcm_ima_oki \
+--enable-decoder=adpcm_ima_qt \
+--enable-decoder=adpcm_ima_rad \
 --enable-decoder=adpcm_ima_smjpeg \
 --enable-decoder=adpcm_ima_wav \
 --enable-decoder=adpcm_ima_ws \
---enable-decoder=adpcm_swf \
+--enable-decoder=adpcm_ms	 \
+--enable-decoder=adpcm_swf	 \
 --enable-decoder=adpcm_xa \
 --enable-decoder=adpcm_yamaha \
---enable-decoder=pcm_zork \
---enable-decoder=pcm_bluray \
---enable-decoder=pcm_lxf \
---enable-decoder=pcm_dvd \
 \
 --enable-demuxer=pcm_s8 \
 --enable-demuxer=pcm_u8 \
@@ -197,7 +209,6 @@ $FFMPEG_PATH/configure --target-os=linux \
 --enable-demuxer=pcm_s16le \
 --enable-demuxer=pcm_u16be \
 --enable-demuxer=pcm_u16le \
---enable-demuxer=pcm_u16be \
 --enable-demuxer=pcm_u24be \
 --enable-demuxer=pcm_u24le \
 --enable-demuxer=pcm_s24be \
@@ -212,11 +223,25 @@ $FFMPEG_PATH/configure --target-os=linux \
 --enable-demuxer=pcm_f64le \
 --enable-demuxer=pcm_alaw \
 --enable-demuxer=pcm_mulaw \
+--enable-demuxer=g722 \
+--enable-demuxer=g723_1 \
+--enable-demuxer=g729 \
 \
 "
 # NOTE: tta demuxer is needed for tta decoder to read tags.
+#--enable-demuxer=afc \
+#--enable-demuxer=adx \
+#--enable-demuxer=adp \
+#--enable-demuxer=thp \
+#--enable-demuxer=xa \
+#--enable-demuxer=smjpeg \
+#--enable-demuxer=siff \
 
-
+#--enable-decoder=adpcm_sbpro_2 \
+#--enable-decoder=adpcm_sbpro_3 \
+#--enable-decoder=adpcm_sbpro_4 \
+#--enable-decoder=adpcm_thp	 \
+#--enable-decoder=adpcm_vima \
 
 cp $FFMPEG_PATH/config.h $FFMPEG_PATH/config.old.h
 rm -f $FFMPEG_PATH/config.h
