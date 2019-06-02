@@ -27,20 +27,26 @@ ifeq ($(USE_VERSION),yes)
 include $(audioplayer_PATH)/build.num # build.number=xxx => $(build.number)
 endif
 
-ifeq ($(TARGET_ARCH_ABI),armeabi-v7a-hard) # HARD
+# NOTE: there is GLOBAL_TARGET_ARCH_NAME (armeabi-v7a/arm64-v8a), TARGET_ARCH (arm/arm64), and ARCH (arm/aarch64) + GLOBAL_ARCH_MODE(neon/arm64)
+
+ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
+	GLOBAL_CFLAGS += -march=armv8-a+simd -D_NDK_MATH_NO_SOFTFP=1 
+	GLOBAL_TARGET_ARCH_NAME := arm64-v8a 
+	
+else ifeq ($(TARGET_ARCH_ABI),armeabi-v7a-hard) # HARD
 	GLOBAL_CFLAGS += -march=armv7-a -mtune=cortex-a9 -mno-thumb-interwork -mfloat-abi=hard -mhard-float -D_NDK_MATH_NO_SOFTFP=1 
-	GLOBAL_TARGET_ARCH_NAME := armeabi-v7a 
+	GLOBAL_TARGET_ARCH_NAME := armeabi-v7a
+	 
 else ifeq ($(TARGET_ARCH_ABI),armeabi-v7a)
 	GLOBAL_CFLAGS += -march=armv7-a -mcpu=cortex-a9 -mno-thumb-interwork -mfloat-abi=softfp
 	GLOBAL_TARGET_ARCH_NAME := armeabi-v7a
+	
 endif
 
-ifeq ($(GLOBAL_ARCH_MODE),d16)
-	GLOBAL_CFLAGS += -mfpu=vfpv3-d16 -DPAMP_D16
-else ifeq ($(GLOBAL_ARCH_MODE),neon)	
+ifeq ($(GLOBAL_ARCH_MODE),neon)	
 	GLOBAL_CFLAGS += -mfpu=neon -DHAVE_NEON=1  #-ftree-vectorize -mvectorize-with-neon-quad #NOTE: neon-vfpv4 doesn't seem to give anything for gcc 4.9/r10e
-else ifeq ($(GLOBAL_ARCH_MODE),x86) # =====
-$(error TODO)
+else ifeq ($(GLOBAL_ARCH_MODE),arm64)
+	GLOBAL_CFLAGS += -DHAVE_ARMV8=1 -DHAVE_NEON=1
 else
 $(error Unknwon GLOBAL_ARCH_MODE) 	
 endif # ==========
@@ -57,6 +63,7 @@ else
 endif
 
 GLOBAL_TARGET_ARCH_NAME := $(strip $(GLOBAL_TARGET_ARCH_NAME))
+FF_TARGET_ARCH := $(strip $(FF_TARGET_ARCH))
 GLOBAL_LDFLAGS := $(GLOBAL_CFLAGS) 
 
 
@@ -105,9 +112,10 @@ LOCAL_LDLIBS += -llog -lz
 LOCAL_WHOLE_STATIC_LIBRARIES := libavformat libavutil libsoxr-prebuilt libswresample-prebuilt libavcodec  #libtta #libjni
 
 ifeq ($(USE_VERSION),yes)
-LOCAL_MODULE := libffmpeg_$(GLOBAL_ARCH_MODE).$(build.number)
+LOCAL_MODULE := libffmpeg_neon.$(build.number)
 else
-LOCAL_MODULE := libffmpeg_$(GLOBAL_ARCH_MODE)
+# REVISIT: drop _neon. For now using this as it's used everywhere
+LOCAL_MODULE := libffmpeg_neon
 endif 
 
 #LOCAL_SHARED_LIBRARIES := libopus-prebuilt 
@@ -121,9 +129,15 @@ else
 #cmd-strip = echo
 LOCAL_LDFLAGS := $(GLOBAL_LDFLAGS) -Wl,--discard-all -Wl,--gc-sections -Wl,--version-script=version-script.txt #-Wl,-Map=moblox.map,--cref #-Wl,--print-gc-sections
 
-ifeq ($(TARGET_ARCH_ABI),armeabi-v7a-hard) # HARD
+
+ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
+LOCAL_LDFLAGS += -Wl,--no-warn-mismatch -lm
+LOCAL_LDLIBS += -lm 
+
+else ifeq ($(TARGET_ARCH_ABI),armeabi-v7a-hard) # HARD
 LOCAL_LDFLAGS += -Wl,--no-warn-mismatch -lm_hard
 LOCAL_LDLIBS += -lm_hard 
+
 endif 
 
 cmd-strip = $(TOOLCHAIN_PREFIX)strip -g -S -d --strip-debug --strip-unneeded --discard-all -R .comment $1

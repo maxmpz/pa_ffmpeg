@@ -1,26 +1,67 @@
-#!/bin/sh
+#!/bin/bash
+
+
+if [[ $1 ==  'arm64' ]] ; then
+	echo "Config: arm64"
+	echo
+	
+elif [[ $1 == 'neon' ]] ; then
+	echo "Config: neon"
+	echo
+	
+else 
+    echo "Usage: pamp-config.sh neon|arm64"
+    echo
+    exit 1
+fi
 
 FFMPEG_PATH=../FFmpeg
 NDK_PATH=/opt/android-ndk-r10e
-PLATFORM=$NDK_PATH/platforms/android-19/arch-arm
 GCC_VER=4.9
-EABI=arm-linux-androideabi-4.9
-PREBUILT=$NDK_PATH/toolchains/$EABI/prebuilt/darwin-x86_64
 
-# HARD
-#-mno-unaligned-access 
-ARM_FF_FLAGS="-march=armv7-a -mcpu=cortex-a9 -mno-thumb-interwork -O3 -mfloat-abi=hard -mhard-float -D_NDK_MATH_NO_SOFTFP=1 \
--std=c99 -ffast-math -fstrict-aliasing -Werror=strict-aliasing"  
+if [[ $1 ==  'arm64' ]] ; then
+	FFMPEG_ARCH=aarch64
+	PLATFORM=$NDK_PATH/platforms/android-21/arch-arm64
+	EABI=aarch64-linux-android-4.9
+	ARM_FF_FLAGS="-march=armv8-a+simd -O3 -D_NDK_MATH_NO_SOFTFP=1 "	
+	PREBUILT=$NDK_PATH/toolchains/$EABI/prebuilt/darwin-x86_64
+	GCC_PREFIX=aarch64-linux-android-
+	LDFLAGS="--sysroot=$PLATFORM \
+		-Wl,--no-whole-archive $PREBUILT/lib/gcc/aarch64-linux-android/$GCC_VER/libgcc.a \
+		-Wl,--no-undefined -Wl,-z,noexecstack -L$PLATFORM/usr/lib \
+		-llog -lz -lc \
+		-Wl,--no-warn-mismatch -lm"
+	TARGET_CONFIG_FILENAME=config-arm64	
+	
+elif [[ $1 == 'neon' ]] ; then
+	FFMPEG_ARCH=arm
+	PLATFORM=$NDK_PATH/platforms/android-21/arch-arm
+	EABI=arm-linux-androideabi-4.9
+	
+	# HARD
+	#-mno-unaligned-access 
+	ARM_FF_FLAGS="-march=armv7-a -mcpu=cortex-a9 -mfpu=neon -O3 -mfloat-abi=hard -mhard-float -D_NDK_MATH_NO_SOFTFP=1"  
 
-# SOFT
-#ARM_FF_FLAGS="-march=armv7-a -mcpu=cortex-a9 -mno-thumb-interwork -mno-unaligned-access -Os -mfloat-abi=softfp \
-#-std=c99 -ffast-math -fstrict-aliasing -Werror=strict-aliasing"  
+	# SOFT
+	#ARM_FF_FLAGS="-march=armv7-a -mcpu=cortex-a9 -mno-thumb-interwork -mno-unaligned-access -Os -mfloat-abi=softfp \
+	PREBUILT=$NDK_PATH/toolchains/$EABI/prebuilt/darwin-x86_64	
+	GCC_PREFIX=arm-linux-androideabi-
+	FF_FLAGS=--cpu=armv7-a 
+	LDFLAGS="--sysroot=$PLATFORM \
+		-Wl,--no-whole-archive $PREBUILT/lib/gcc/arm-linux-androideabi/$GCC_VER/libgcc.a \
+		-Wl,--no-undefined -Wl,-z,noexecstack -L$PLATFORM/usr/lib \
+		-llog -lz -lc \
+		-Wl,--no-warn-mismatch -lm_hard"
+	TARGET_CONFIG_FILENAME=config-neon
+fi
 
-NEON_AND_D16_CONFIG="--cpu=armv7-a \
---extra-cflags=\"-DANDROID --sysroot=$PLATFORM \
-$ARM_FF_FLAGS \
--MMD -MP -ffunction-sections -funwind-tables -fstack-protector -Wno-psabi -fomit-frame-pointer \
--std=c99 -Wno-sign-compare -Wno-switch -Wno-pointer-sign -ffast-math -mno-thumb-interwork -Wa,--noexecstack -I$PLATFORM/usr/include "
+
+NEON_CONFIG=" \
+	$FF_FLAGS \
+	--extra-cflags=\"-DANDROID --sysroot=$PLATFORM \
+		$ARM_FF_FLAGS \
+		-MMD -MP -fstrict-aliasing -Werror=strict-aliasing -ffunction-sections -funwind-tables -fstack-protector -Wno-psabi -fomit-frame-pointer \
+		-std=c99 -Wno-sign-compare -Wno-switch -Wno-pointer-sign -ffast-math -Wa,--noexecstack -I$PLATFORM/usr/include \""
 
 #--enable-demuxer=wv \
 #--enable-decoder=mp3 \
@@ -31,16 +72,6 @@ $ARM_FF_FLAGS \
 #--enable-decoder=wavpack \
 #--enable-demuxer=wv \
 #--enable-decoder=libopus \
-
-D16_CONFIG="--disable-neon $NEON_AND_D16_CONFIG -mfpu=vfpv3-d16 \""
-NEON_CONFIG="$NEON_AND_D16_CONFIG -mfpu=neon \""
-
-LDFLAGS="--sysroot=$PLATFORM \
--Wl,--no-whole-archive $PREBUILT/lib/gcc/arm-linux-androideabi/$GCC_VER/libgcc.a \
--Wl,--no-undefined -Wl,-z,noexecstack -L$PLATFORM/usr/lib \
--llog -lz -lc \
--Wl,--no-warn-mismatch -lm_hard"
-
 #--enable-decoder=libopencore_amrnb \
 #--enable-decoder=libopencore_amrwb \
 #--enable-demuxer=amr \
@@ -51,13 +82,13 @@ LDFLAGS="--sysroot=$PLATFORM \
 
 COMMON_CONFIG="\
 $FFMPEG_PATH/configure --target-os=linux \
---arch=arm \
+--arch=$FFMPEG_ARCH \
 --enable-cross-compile \
---cc=$PREBUILT/bin/arm-linux-androideabi-gcc \
---as=$PREBUILT/bin/arm-linux-androideabi-gcc \
---cross-prefix=$PREBUILT/bin/arm-linux-androideabi- \
+--cc=$PREBUILT/bin/${GCC_PREFIX}gcc \
+--as=$PREBUILT/bin/${GCC_PREFIX}gcc \
+--cross-prefix=$PREBUILT/bin/${GCC_PREFIX} \
 --sysinclude=$PLATFORM/usr/include \
---nm=$PREBUILT/bin/arm-linux-androideabi-nm \
+--nm=$PREBUILT/bin/${GCC_PREFIX}nm \
 --extra-ldflags=\"$LDFLAGS\" \
 --enable-small \
 --enable-pic \
@@ -246,19 +277,16 @@ $FFMPEG_PATH/configure --target-os=linux \
 cp $FFMPEG_PATH/config.h $FFMPEG_PATH/config.old.h
 rm -f $FFMPEG_PATH/config.h
 
-#eval "$COMMON_CONFIG $D16_CONFIG"
-#if [ $? -ne 0 ]; then
-	#exit 1
-#fi
-#cp config.h $FFMPEG_PATH/config-d16.h
-#cp config.mak $FFMPEG_PATH/config-d16.mak
+#echo "$COMMON_CONFIG $NEON_CONFIG"
+#exit 1
 
 eval "$COMMON_CONFIG $NEON_CONFIG"
 if [ $? -ne 0 ]; then
 	exit 1
 fi
-cp config.h $FFMPEG_PATH/config-neon.h
-cp config.mak $FFMPEG_PATH/config-neon.mak
+
+cp config.h $FFMPEG_PATH/${TARGET_CONFIG_FILENAME}.h
+cp config.mak $FFMPEG_PATH/${TARGET_CONFIG_FILENAME}.mak
 
 cp config-pamp.h $FFMPEG_PATH/config.h
 cp config-pamp.mak $FFMPEG_PATH/config.mak

@@ -8,22 +8,11 @@ FFMPEG_LOCAL_PATH := $(FFMPEG_ROOT)/$(DIR_NAME)
 
 SUBDIR := $(FFMPEG_LOCAL_PATH)/
 
-ifeq ($(TARGET_ARCH_ABI),armeabi-v7a-hard)
+ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
+include $(FFMPEG_ROOT)/config-arm64.mak
 
-ifeq ($(GLOBAL_ARCH_MODE),d16)
-include $(FFMPEG_ROOT)/config-d16.mak
-else ifeq ($(GLOBAL_ARCH_MODE),neon)
+else ifeq ($(TARGET_ARCH_ABI),armeabi-v7a-hard)
 include $(FFMPEG_ROOT)/config-neon.mak
-endif	
-
-else ifeq ($(TARGET_ARCH_ABI),armeabi-v7a)
-
-ifeq ($(GLOBAL_ARCH_MODE),d16)
-include $(FFMPEG_ROOT)/config-d16.mak
-else ifeq ($(GLOBAL_ARCH_MODE),neon)
-include $(FFMPEG_ROOT)/config-neon.mak
-
-endif
 
 else
 $(error TODO)
@@ -41,6 +30,8 @@ ARMV5TE-OBJS :=
 ARMV6-OBJS :=
 VFP-OBJS :=
 NEON-OBJS :=
+ARMV8-OBJS :=
+ARMV8-OBJS-yes :=
 
 ifeq ($(LOCAL_USE_LOCAL_MAKEFILE),yes)
 include $(LOCAL_PATH)/Makefile
@@ -65,6 +56,10 @@ endif
 ifeq ($(HAVE_NEON),yes)
 	OBJS += $(NEON-OBJS) $(NEON-OBJS-yes)
 endif
+ifeq ($(HAVE_ARMV8),yes)
+	OBJS += $(ARMV8-OBJS) $(ARMV8-OBJS-yes)
+endif
+
 
 FFNAME := lib$(NAME)
 FFLIBS := $(foreach,NAME,$(FFLIBS),lib$(NAME))
@@ -83,8 +78,8 @@ endif
 
 # OBJS now have all files to build - both .S and .c - as .o; for ndk-build we need to prepare source files list
 
-ALL_S_FILES := $(wildcard $(FFMPEG_LOCAL_PATH)/$(TARGET_ARCH)/*.S)
-ALL_S_FILES := $(addprefix $(TARGET_ARCH)/, $(notdir $(ALL_S_FILES)))
+ALL_S_FILES := $(wildcard $(FFMPEG_LOCAL_PATH)/$(ARCH)/*.S)
+ALL_S_FILES := $(addprefix $(ARCH)/, $(notdir $(ALL_S_FILES)))
 
 ifneq ($(ALL_S_FILES),)
 ALL_S_OBJS := $(patsubst %.S,%.o,$(ALL_S_FILES))
@@ -104,14 +99,14 @@ S_FILES := $(patsubst %.o,%.S,$(S_OBJS))
 #-include $(LOCAL_PATH)/$(ARCH)/Makefile
 
 # With full paths
-OVERRIDE_S_FILES := $(wildcard $(LOCAL_PATH)/$(TARGET_ARCH)/*.S)
+OVERRIDE_S_FILES := $(wildcard $(LOCAL_PATH)/$(ARCH)/*.S)
 # now just arm/*.S
-OVERRIDE_S_FILES := $(addprefix $(TARGET_ARCH)/, $(notdir $(OVERRIDE_FILES)))
+OVERRIDE_S_FILES := $(addprefix $(ARCH)/, $(notdir $(OVERRIDE_FILES)))
 
 
 # This is our override files - all of them - including those which are probably not in OBJS. Paths relative to DIR_NAME: file.c ... arm/file.c
-OVERRIDE_C_FILES := $(notdir $(wildcard $(LOCAL_PATH)/*.c)) $(addprefix $(TARGET_ARCH)/, $(notdir $(wildcard $(LOCAL_PATH)/$(TARGET_ARCH)/*.c)))
-OVERRIDE_S_FILES := $(addprefix $(TARGET_ARCH)/, $(notdir $(wildcard $(LOCAL_PATH)/$(TARGET_ARCH)/*.S)))
+OVERRIDE_C_FILES := $(notdir $(wildcard $(LOCAL_PATH)/*.c)) $(addprefix $(ARCH)/, $(notdir $(wildcard $(LOCAL_PATH)/$(ARCH)/*.c)))
+OVERRIDE_S_FILES := $(addprefix $(ARCH)/, $(notdir $(wildcard $(LOCAL_PATH)/$(ARCH)/*.S)))
 
 # These are just the overriden files which were also in C_FILES
 OVERRIDE_C_FILES := $(sort $(filter $(OVERRIDE_C_FILES),$(C_FILES)))

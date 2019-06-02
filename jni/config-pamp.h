@@ -1,11 +1,11 @@
 // NOTE: overwritten by pamp-config.sh from config-pamp.h
 
-#if HAVE_NEON
+#if HAVE_ARMV8
+#	include "config-arm64.h"
+#elif HAVE_NEON
 #	include "config-neon.h"
-#elif defined(PAMP_D16)
-#	include "config-d16.h"
 #else
-#	include "config-lowend.h"
+#error
 #endif
 
 #undef FFMPEG_CONFIGURATION
