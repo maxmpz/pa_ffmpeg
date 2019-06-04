@@ -9,3 +9,5 @@ APP_DEBUGGABLE := false
 NDK_TOOLCHAIN_VERSION := 4.9
 #NDK_TOOLCHAIN_VERSION := 4.8
 
+# Disable cleaning everything in /libs as we need previous/other lib
+NDK_APP.local.cleaned_binaries := true

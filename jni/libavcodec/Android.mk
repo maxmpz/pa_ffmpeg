@@ -3,7 +3,7 @@
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
-LOCAL_OBJS_TO_REMOVE := arm/ac3dsp_armv6.o arm/ac3dsp_arm.o arm/ac3dsp_neon.o arm/ac3dsp_init_arm.o \
+#LOCAL_OBJS_TO_REMOVE := arm/ac3dsp_armv6.o arm/ac3dsp_arm.o arm/ac3dsp_neon.o arm/ac3dsp_init_arm.o \
 	arm/jrevdct_arm.o arm/mpegvideo_arm.o arm/simple_idct_arm.o arm/simple_idct_armv6.o \
 	arm/mpegvideo_neon.o arm/simple_idct_neon.o arm/simple_idct_armv5te.o \
 	arm/hpeldsp_arm.o arm/hpeldsp_armv6.o arm/hpeldsp_init_arm.o arm/hpeldsp_init_armv6.o \
@@ -48,6 +48,9 @@ LOCAL_OBJS_TO_REMOVE := arm/ac3dsp_armv6.o arm/ac3dsp_arm.o arm/ac3dsp_neon.o ar
 #  \
 # arm/mpegaudiodsp_fixed_armv6.o \
 # 
+
+# NOTE: doesn't affect so size 
+LOCAL_OBJS_TO_REMOVE :=
        
         
 include $(LOCAL_PATH)/../av.mk

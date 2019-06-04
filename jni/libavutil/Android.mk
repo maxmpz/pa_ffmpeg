@@ -3,6 +3,7 @@
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
+# NOTE: this reduces compile speed, but resulting so doesn't change as these are pretty well optimized out by linker anyway
 LOCAL_OBJS_TO_REMOVE := \
        xga_font_data.o                                                  \
        xtea.o                                                           \

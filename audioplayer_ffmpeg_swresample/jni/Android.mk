@@ -18,27 +18,21 @@ GLOBAL_CFLAGS += -DHAVE_AV_CONFIG_H -DPAMP_CONFIG_FLOAT_ONLY_RESAMPLER=1
 # NOTE: there is GLOBAL_TARGET_ARCH_NAME (armeabi-v7a/arm64-v8a), TARGET_ARCH (arm/arm64), and ARCH (arm/aarch64) + GLOBAL_ARCH_MODE(neon/arm64)
 
 ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
-	GLOBAL_CFLAGS += -march=armv8-a+simd -Ofast -D_NDK_MATH_NO_SOFTFP=1 -fno-integrated-as # Needed to compile aarch64 S in clang mode 
+	# -fopt-info-vec-missed  
+	GLOBAL_CFLAGS += -march=armv8-a+simd -Ofast -D_NDK_MATH_NO_SOFTFP=1  
 	GLOBAL_TARGET_ARCH_NAME := arm64-v8a
+	GLOBAL_CFLAGS += -DHAVE_ARMV8=1 -DHAVE_NEON=1 -ftree-vectorize
+	
+	ifeq ($(NDK_TOOLCHAIN_VERSION),clang3.6)
+		GLOBAL_CFLAGS += -fno-integrated-as # Needed to compile aarch64 S in clang mode, but not needed for gcc
+	endif
 	
 else ifeq ($(TARGET_ARCH_ABI),armeabi-v7a-hard) # HARD
 	GLOBAL_CFLAGS += -march=armv7-a -mtune=cortex-a9 -mno-thumb-interwork -Ofast -mfloat-abi=hard -mhard-float -D_NDK_MATH_NO_SOFTFP=1
 	GLOBAL_TARGET_ARCH_NAME := armeabi-v7a
-	
-else ifeq ($(TARGET_ARCH_ABI),armeabi-v7a)
-	GLOBAL_CFLAGS += -march=armv7-a -mcpu=cortex-a9 -mno-thumb-interwork -mfloat-abi=softfp
-	GLOBAL_TARGET_ARCH_NAME := armeabi-v7a
+	GLOBAL_CFLAGS += -mfpu=neon -DHAVE_NEON=1 #-ftree-vectorize -mvectorize-with-neon-quad
 endif
 
-ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
-	GLOBAL_CFLAGS += -DHAVE_ARMV8=1 -DHAVE_NEON=1 #-ftree-vectorize -mvectorize-with-neon-quad
-else ifeq ($(GLOBAL_ARCH_MODE),neon)	
-	GLOBAL_CFLAGS += -mfpu=neon -DHAVE_NEON=1 #-ftree-vectorize -mvectorize-with-neon-quad
-else ifeq ($(GLOBAL_ARCH_MODE),x86) # =====
-$(error TODO)
-else
-$(error Unknwon GLOBAL_ARCH_MODE) 	
-endif # ==========
 
 ifeq ($(NDK_APP_DEBUGGABLE),true)
 $(warning NDK_APP_DEBUGGABLE for $(DIR_NAME))		

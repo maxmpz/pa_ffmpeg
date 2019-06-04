@@ -3,7 +3,7 @@
 LOCAL_PATH := $(call my-dir)
 GLOBAL_PATH := $(call my-dir)
 
-USE_VERSION := #yes # Enables build.version based versioning. Ffmpeg requires this to be insync
+USE_VERSION := #yes # Enables build.version based versioning. Ffmpeg requires this to be in sync
 
 include $(LOCAL_PATH)/config-pamp.mak
 
@@ -30,26 +30,16 @@ endif
 # NOTE: there is GLOBAL_TARGET_ARCH_NAME (armeabi-v7a/arm64-v8a), TARGET_ARCH (arm/arm64), and ARCH (arm/aarch64) + GLOBAL_ARCH_MODE(neon/arm64)
 
 ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
-	GLOBAL_CFLAGS += -march=armv8-a+simd -D_NDK_MATH_NO_SOFTFP=1 
+	GLOBAL_CFLAGS += -march=armv8-a+simd -D_NDK_MATH_NO_SOFTFP=1
+	GLOBAL_CFLAGS += -DHAVE_ARMV8=1 -DHAVE_NEON=1
 	GLOBAL_TARGET_ARCH_NAME := arm64-v8a 
 	
 else ifeq ($(TARGET_ARCH_ABI),armeabi-v7a-hard) # HARD
 	GLOBAL_CFLAGS += -march=armv7-a -mtune=cortex-a9 -mno-thumb-interwork -mfloat-abi=hard -mhard-float -D_NDK_MATH_NO_SOFTFP=1 
+	GLOBAL_CFLAGS += -mfpu=neon -DHAVE_NEON=1  #-ftree-vectorize -mvectorize-with-neon-quad #NOTE: neon-vfpv4 doesn't seem to give anything for gcc 4.9/r10e
 	GLOBAL_TARGET_ARCH_NAME := armeabi-v7a
 	 
-else ifeq ($(TARGET_ARCH_ABI),armeabi-v7a)
-	GLOBAL_CFLAGS += -march=armv7-a -mcpu=cortex-a9 -mno-thumb-interwork -mfloat-abi=softfp
-	GLOBAL_TARGET_ARCH_NAME := armeabi-v7a
-	
 endif
-
-ifeq ($(GLOBAL_ARCH_MODE),neon)	
-	GLOBAL_CFLAGS += -mfpu=neon -DHAVE_NEON=1  #-ftree-vectorize -mvectorize-with-neon-quad #NOTE: neon-vfpv4 doesn't seem to give anything for gcc 4.9/r10e
-else ifeq ($(GLOBAL_ARCH_MODE),arm64)
-	GLOBAL_CFLAGS += -DHAVE_ARMV8=1 -DHAVE_NEON=1
-else
-$(error Unknwon GLOBAL_ARCH_MODE) 	
-endif # ==========
 
 ifeq ($(GLOBAL_FLTO),true)
 GLOBAL_CFLAGS += -flto
@@ -63,7 +53,6 @@ else
 endif
 
 GLOBAL_TARGET_ARCH_NAME := $(strip $(GLOBAL_TARGET_ARCH_NAME))
-FF_TARGET_ARCH := $(strip $(FF_TARGET_ARCH))
 GLOBAL_LDFLAGS := $(GLOBAL_CFLAGS) 
 
 
@@ -109,7 +98,7 @@ LOCAL_LDLIBS += -llog -lz
 
 #LOCAL_STATIC_LIBRARIES := libavformat libavcodec libavutil libswresample #libjni #libopus # libtta libopencore_amr
 
-LOCAL_WHOLE_STATIC_LIBRARIES := libavformat libavutil libsoxr-prebuilt libswresample-prebuilt libavcodec  #libtta #libjni
+LOCAL_WHOLE_STATIC_LIBRARIES := libavformat libavutil libsoxr-prebuilt libswresample-prebuilt libavcodec  #libtta #libjni NOTE: libswresample has Android.mk.disabled
 
 ifeq ($(USE_VERSION),yes)
 LOCAL_MODULE := libffmpeg_neon.$(build.number)
@@ -166,11 +155,12 @@ pamp-install-custom: installed_modules
 	$(hide) rm -f $(PAMP_DST_CLEAN)
 	@echo "Copy : $(PAMP_SRC) => $(PAMP_DST)"
 	$(hide) cp $(PAMP_SRC) $(PAMP_DST) 
-
+	
 include $(BUILD_SHARED_LIBRARY)
 
 #ALL_SHARED_LIBRARIES += pamp-install-custom
 all: pamp-install-custom 
+
 
 # =================================================
 include $(CLEAR_VARS)

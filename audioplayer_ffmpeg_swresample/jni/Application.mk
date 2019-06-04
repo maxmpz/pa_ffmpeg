@@ -7,7 +7,17 @@ APP_DEBUGGABLE := false
 
 APP_MODULES := libsoxr libswresample # NOTE: this forces static lib build
 
-NDK_TOOLCHAIN_VERSION := clang3.6
+
+ifeq ($(GLOBAL_ARCH_MODE),arm64)
 #NDK_TOOLCHAIN_VERSION := 4.9
+NDK_TOOLCHAIN_VERSION := clang3.6
+else
+NDK_TOOLCHAIN_VERSION := clang3.6
+endif
+
+
+
+
+#NDK_TOOLCHAIN_VERSION := clang3.6
 #NDK_TOOLCHAIN_VERSION := 4.8
 
