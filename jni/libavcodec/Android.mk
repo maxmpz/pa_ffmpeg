@@ -30,6 +30,7 @@ include $(CLEAR_VARS)
        arm/fft_fixed_neon.o \
        arm/mdct_fixed_neon.o \
        arm/fft_fixed_init_arm.o \
+       golomb.o \
        
 
 # mpc:		
@@ -50,7 +51,7 @@ include $(CLEAR_VARS)
 # 
 
 # NOTE: doesn't affect so size 
-LOCAL_OBJS_TO_REMOVE :=
+LOCAL_OBJS_TO_REMOVE := \
        
         
 include $(LOCAL_PATH)/../av.mk
@@ -62,7 +63,8 @@ LOCAL_C_INCLUDES :=		\
 	$(LOCAL_PATH)/..	\
 	$(FFMPEG_LOCAL_PATH)		\
 	$(FFMPEG_LOCAL_PATH)/.. \
-	$(LOCAL_PATH)/../../../audioplayer_libopus/opus-1.0.1/include
+	
+#	$(LOCAL_PATH)/../../../audioplayer_libopus/opus-1.0.1/include
 
 # funroll-loops helps a bit (-0.03% realtime) mp3, but adds 40 kb
 LOCAL_CFLAGS += $(GLOBAL_CFLAGS) #-funroll-loops #-ftree-vectorize -mvectorize-with-neon-quad 
@@ -73,3 +75,5 @@ LOCAL_STATIC_LIBRARIES := $(FFLIBS)
 LOCAL_MODULE := $(FFNAME)
 
 include $(BUILD_STATIC_LIBRARY)
+
+

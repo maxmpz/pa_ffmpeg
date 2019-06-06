@@ -5,13 +5,24 @@ LOCAL_PATH := $(call my-dir)
 
 AUDIOPLAYER_FFMPEG_ROOT := ../..
 FFMPEG_ROOT := $(AUDIOPLAYER_FFMPEG_ROOT)/FFmpeg
+FFMPEG_OVERRIDE_ROOT := $(AUDIOPLAYER_FFMPEG_ROOT)/jni
 
 include $(AUDIOPLAYER_FFMPEG_ROOT)/jni/config-pamp.mak
 
-GLOBAL_FLTO := false # NOTE: flto doesn't work with ffmpeg properly (28-05-2014, gcc 4.9/NDK 10e) 
+GLOBAL_FLTO := false # NOTE: flto doesn't work with ffmpeg properly (28-05-2014, gcc 4.9/NDK 10e)
 
-GLOBAL_CFLAGS := -std=c99 -ffast-math -fstrict-aliasing -Werror=strict-aliasing
-GLOBAL_CFLAGS += -DHAVE_AV_CONFIG_H -DPAMP_CONFIG_FLOAT_ONLY_RESAMPLER=1
+GLOBAL_APPLY_FFMPEG_OPTS := true
+
+GLOBAL_CFLAGS := -std=c99 -ffast-math -fstrict-aliasing -Werror=strict-aliasing #-mfix-cortex-a53-835769 -mfix-cortex-a53-843419 -mstrict-align
+GLOBAL_CFLAGS += -DHAVE_AV_CONFIG_H
+
+ifeq ($(GLOBAL_APPLY_FFMPEG_OPTS),true)
+GLOBAL_CFLAGS += -DPAMP_CONFIG_NO_VIDEO=1  -DPAMP_CONFIG_FLOAT_ONLY_RESAMPLER=1 -DPAMP_CHANGES=1 -DPAMP_CONFIG_NO_TAGS=1
+# NOTE: don't expose any paths to .so 
+GLOBAL_CFLAGS += -D__FILE__=\"\" -Wno-builtin-macro-redefined
+else
+$(warning no GLOBAL_APPLY_FFMPEG_OPTS)
+endif
 
 # REVISIT:-mno-unaligned-access  - probably not needed
 
@@ -19,7 +30,8 @@ GLOBAL_CFLAGS += -DHAVE_AV_CONFIG_H -DPAMP_CONFIG_FLOAT_ONLY_RESAMPLER=1
 
 ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
 	# -fopt-info-vec-missed  
-	GLOBAL_CFLAGS += -march=armv8-a+simd -Ofast -D_NDK_MATH_NO_SOFTFP=1  
+	# NOTE: gcc seems to be better for arm64 + disabled arm64 asm opts for resampler
+	GLOBAL_CFLAGS += -march=armv8-a+simd -Ofast -D_NDK_MATH_NO_SOFTFP=1 -DPAMP_DISABLE_NEON_ASM  
 	GLOBAL_TARGET_ARCH_NAME := arm64-v8a
 	GLOBAL_CFLAGS += -DHAVE_ARMV8=1 -DHAVE_NEON=1 -ftree-vectorize
 	
@@ -44,24 +56,6 @@ endif
 GLOBAL_TARGET_ARCH_NAME := $(strip $(GLOBAL_TARGET_ARCH_NAME))
 FF_TARGET_ARCH := $(strip $(FF_TARGET_ARCH))
 
-# MaxMP: redefine this macro to avoid inclusion of the project dir as headers dir - this breaks ffmpeg build.
-define  ev-compile-c-source
-_SRC:=$$(LOCAL_PATH)/$(1)
-_OBJ:=$$(LOCAL_OBJS_DIR)/$(2)
-
-_FLAGS := $$($$(my)CFLAGS) \
-          $$(call get-src-file-target-cflags,$(1)) \
-          $$(call host-c-includes,$$(LOCAL_C_INCLUDES)) \
-          $$(LOCAL_CFLAGS) \
-          $$(NDK_APP_CFLAGS) \
-          $$(call host-c-includes,$$($(my)C_INCLUDES)) \
-          -c \
-
-_TEXT := "Compile $$(call get-src-file-text,$1)"
-_CC   := $$(NDK_CCACHE) $$(TARGET_CC)
-
-$$(eval $$(call ev-build-source-file))
-endef
 
 # =================================================
 include $(CLEAR_VARS)

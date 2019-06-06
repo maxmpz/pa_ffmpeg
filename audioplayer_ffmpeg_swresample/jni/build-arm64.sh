@@ -1,8 +1,5 @@
 #!/bin/bash
 
-NDK_PATH=/opt/android-ndk-r10e
+echo Using ANDROID_NDK=$ANDROID_NDK
 
-echo Using NDK_PATH=$NDK_PATH
-
-$NDK_PATH/ndk-build APP_ABI=arm64-v8a GLOBAL_ARCH_MODE=arm64 $*
-
+$ANDROID_NDK/ndk-build -j16 APP_ABI=arm64-v8a GLOBAL_ARCH_MODE=arm64 $*

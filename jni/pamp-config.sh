@@ -93,23 +93,22 @@ $FFMPEG_PATH/configure --target-os=linux \
 --enable-small \
 --enable-pic \
 \
+--disable-autodetect \
 --disable-runtime-cpudetect \
 --disable-symver \
 --disable-pixelutils \
 --disable-doc \
---disable-dxva2 \
 --disable-debug \
---disable-ffplay \
---disable-ffprobe \
---disable-ffserver \
+--disable-programs \
 --disable-avdevice \
 --disable-swscale \
 --disable-avfilter \
 --disable-everything \
 --disable-network \
---disable-vaapi \
---disable-vdpau \
 --disable-pthreads \
+--disable-faan \
+--disable-lzo \
+--disable-parser=dirac \
 \
 --enable-protocol=file \
 --enable-protocol=pipe \
@@ -125,8 +124,6 @@ $FFMPEG_PATH/configure --target-os=linux \
 --enable-decoder=wmav1 \
 --enable-decoder=wmav2 \
 --enable-decoder=alac \
---enable-decoder=mace3 \
---enable-decoder=mace6 \
 --enable-decoder=wmapro \
 --enable-decoder=wmalossless \
 --enable-decoder=ape \
@@ -135,9 +132,14 @@ $FFMPEG_PATH/configure --target-os=linux \
 --enable-decoder=opus \
 --enable-decoder=tak \
 --enable-decoder=dsd_* \
+--enable-decoder=dst \
+--enable-decoder=als \
+--enable-decoder=mlp \
+--enable-decoder=truehd \
 \
 --enable-parser=opus \
 --enable-parser=flac \
+--enable-parser=mlp \
 --enable-demuxer=flac \
 --enable-parser=vorbis \
 --enable-parser=tak \
@@ -145,11 +147,6 @@ $FFMPEG_PATH/configure --target-os=linux \
 --enable-demuxer=dsf \
 --enable-demuxer=iff \
 --enable-demuxer=matroska \
-\
---enable-decoder=mpc7 \
---enable-decoder=mpc8 \
---enable-demuxer=mpc \
---enable-demuxer=mpc8 \
 \
 --enable-demuxer=wav \
 --enable-demuxer=flv \
@@ -165,6 +162,8 @@ $FFMPEG_PATH/configure --target-os=linux \
 --enable-parser=aac \
 --enable-parser=mpegaudio \
 --enable-parser=gsm \
+--enable-parser=mlp \
+--enable-parser=truehd \
 \
 --enable-decoder=pcm_s8 \
 --enable-decoder=pcm_s8_planar \
@@ -175,6 +174,8 @@ $FFMPEG_PATH/configure --target-os=linux \
 --enable-decoder=pcm_u16le \
 --enable-decoder=pcm_s16be_planar \
 --enable-decoder=pcm_s16le_planar \
+--enable-decoder=pcm_f16le \
+--enable-decoder=pcm_f24le \
 --enable-decoder=pcm_f64le \
 --enable-decoder=pcm_f64be \
 --enable-decoder=pcm_s24be \
@@ -259,6 +260,14 @@ $FFMPEG_PATH/configure --target-os=linux \
 --enable-demuxer=g729 \
 \
 "
+
+#--enable-decoder=mace3 \
+#--enable-decoder=mace6 \
+#--enable-decoder=mpc7 \
+#--enable-decoder=mpc8 \
+#--enable-demuxer=mpc \
+#--enable-demuxer=mpc8 \
+
 # NOTE: tta demuxer is needed for tta decoder to read tags.
 #--enable-demuxer=afc \
 #--enable-demuxer=adx \
@@ -274,8 +283,8 @@ $FFMPEG_PATH/configure --target-os=linux \
 #--enable-decoder=adpcm_thp	 \
 #--enable-decoder=adpcm_vima \
 
-cp $FFMPEG_PATH/config.h $FFMPEG_PATH/config.old.h
-rm -f $FFMPEG_PATH/config.h
+#cp $FFMPEG_PATH/config.h $FFMPEG_PATH/config.old.h
+rm -f config.h
 
 #echo "$COMMON_CONFIG $NEON_CONFIG"
 #exit 1
@@ -285,17 +294,18 @@ if [ $? -ne 0 ]; then
 	exit 1
 fi
 
-cp config.h $FFMPEG_PATH/${TARGET_CONFIG_FILENAME}.h
-cp config.mak $FFMPEG_PATH/${TARGET_CONFIG_FILENAME}.mak
+mv config.h ${TARGET_CONFIG_FILENAME}.h  # REVISIT: use local dir
+mv ffbuild/config.mak ffbuild/${TARGET_CONFIG_FILENAME}.mak  # REVISIT: use local dir
 
-cp config-pamp.h $FFMPEG_PATH/config.h
-cp config-pamp.mak $FFMPEG_PATH/config.mak
+cp config-pamp.h config.h
+cp config-pamp.mak ffbuild/config.mak
 
-mv libavutil/avconfig.h $FFMPEG_PATH/libavutil/
+#mv libavutil/avconfig.h $FFMPEG_PATH/libavutil/
 
-$FFMPEG_PATH/version.sh $FFMPEG_PATH libavutil/ffversion.h # NOTE: creates in jni/libavutil/  
+$FFMPEG_PATH/ffbuild/version.sh $FFMPEG_PATH libavutil/ffversion.h # NOTE: creates in jni/libavutil/  
 
 #rm -f "./-ffunction-sections" # remove some trash after configure
-rm -f "./config.h" # remove some trash after configure
-rm -f "./config.mak" # remove some trash after configure
+#rm -f "./config.h" # remove some trash after configure
+#rm -f "./config.mak" # remove some trash after configure
+rm -f src
 

@@ -16,14 +16,14 @@ LOCAL_SRC_FILES := $(FFFILES)
 # NOTE: important to have ../../jni first to look for overriden headers, such as ffversion.h
 LOCAL_C_INCLUDES :=		\
 	$(abspath $(LOCAL_PATH)/../libsoxr) \
-	$(abspath $(LOCAL_PATH)/../libsoxr/soxr-0.1.1/src) \
+	$(abspath $(LOCAL_PATH)/../libsoxr/soxr-0.1.3/src) \
 	$(LOCAL_PATH)		\
 	../../jni \
 	$(FFMPEG_LOCAL_PATH)		\
 	$(FFMPEG_LOCAL_PATH)/..
 	
 LOCAL_CFLAGS += $(GLOBAL_CFLAGS)
-LOCAL_CFLAGS += -funroll-loops 
+#LOCAL_CFLAGS += -funroll-loops 
 #LOCAL_CFLAGS += --param max-inline-insns-single=1000
 #LOCAL_CFLAGS += -ftree-vectorize -mvectorize-with-neon-quad
 

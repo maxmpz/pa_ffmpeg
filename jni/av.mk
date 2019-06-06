@@ -3,16 +3,16 @@ $(call clear-vars, $(FFMPEG_CONFIG_VARS))
 # DIR_NAME = libavcodec libavformat libavutil libswresample ...
 DIR_NAME := $(notdir $(basename $(LOCAL_PATH)))
 
-# FFMPEG_LOCAL_PATH = ../ffmpeg/libavcodec etc.
+# FFMPEG_LOCAL_PATH => ../ffmpeg/libavcodec, etc.
 FFMPEG_LOCAL_PATH := $(FFMPEG_ROOT)/$(DIR_NAME)
 
 SUBDIR := $(FFMPEG_LOCAL_PATH)/
 
 ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
-include $(FFMPEG_ROOT)/config-arm64.mak
+include ffbuild/config-arm64.mak
 
 else ifeq ($(TARGET_ARCH_ABI),armeabi-v7a-hard)
-include $(FFMPEG_ROOT)/config-neon.mak
+include ffbuild/config-neon.mak
 
 else
 $(error TODO)
@@ -71,6 +71,10 @@ LOCAL_CFLAGS :=  \
 	
 #	-Wno-incompatible-pointer-types -Wno-logical-op-parentheses -Wno-asm-operand-widths -Wno-unknown-warning-option  
   
+ifneq ($(GLOBAL_APPLY_FFMPEG_OPTS),true)
+LOCAL_OBJS_TO_REMOVE := 
+endif  
+
 ifneq ($(LOCAL_OBJS_TO_REMOVE),)
 OBJS := $(filter-out $(LOCAL_OBJS_TO_REMOVE),$(OBJS))
 LOCAL_OBJS_TO_REMOVE :=
@@ -94,9 +98,6 @@ endif
 C_FILES := $(patsubst %.o,%.c,$(C_OBJS))
 
 S_FILES := $(patsubst %.o,%.S,$(S_OBJS))
-
-#include $(LOCAL_PATH)/Makefile
-#-include $(LOCAL_PATH)/$(ARCH)/Makefile
 
 # With full paths
 OVERRIDE_S_FILES := $(wildcard $(LOCAL_PATH)/$(ARCH)/*.S)
@@ -123,5 +124,5 @@ RELATIVE_PATH_FOR_OVERRIDE := ../../jni/$(DIR_NAME)
 FFFILES := $(addprefix $(RELATIVE_PATH_FOR_OVERRIDE)/, $(OVERRIDE_S_FILES)) $(addprefix $(RELATIVE_PATH_FOR_OVERRIDE)/, $(OVERRIDE_C_FILES)) $(sort $(S_FILES)) $(sort $(C_FILES))
 FFFILES := $(addprefix ../$(FFMPEG_ROOT)/$(DIR_NAME)/, $(FFFILES))
 
-#$(warning $(FFFILES))
+#$(error $(FFFILES))
 

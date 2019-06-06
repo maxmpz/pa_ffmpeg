@@ -22,8 +22,7 @@ LOCAL_OBJS_TO_REMOVE := \
 		pixelutils.o \
 		color_utils.o \
 		adler32.o \
-		arm\float_dsp_init_vfp.o \
-		arm\float_dsp_vfp.o \
+		aes_ctr.o \
 		
 #		fixed_dsp.o \
 		imgutils.o                                                       \

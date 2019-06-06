@@ -2,22 +2,23 @@
 	global:
 		JNI_On*;
 		
-		ff_aac_decoder;
 		ff_ape_decoder;
 		ff_mp3float_decoder;
 		ff_mp2float_decoder;
 		ff_mp3adufloat_decoder;
 		ff_mp3on4float_decoder;
-		ff_flv_demuxer;
+		ff_flv_demuxer; 
 		
 		avcodec_find_decoder;
 		avcodec_open2;
 		av_dump_format;
-		av_log;
+		#av_log;
 		av_get_profile_name;
-		av_malloc;
-		av_freep;
-		av_dict_*;
+		#av_malloc;
+		#av_freep;
+		av_dict_get;
+		av_dict_set;
+		av_dict_free;
 		av_rescale_q;
 		av_strerror;
 		av_get_default_channel_layout;
@@ -41,15 +42,9 @@
 		avcodec_flush_buffers;
 		av_register_all;
 		av_log_set_callback;
-		av_rescale_rnd;
-		av_samples_alloc;
-		av_get_channel_layout_nb_channels;
-		av_assert1;
-		av_assert0;
 		av_strstart;
 		av_stristr;
 		avio_size;
-		av_base64_decode;
 		av_lockmgr_register;
 
 		swri_oldapi_conv_flt_to_s16_neon;
@@ -63,29 +58,9 @@
 		av_rdft_end;
 		av_rdft_init;
 		av_rdft_calc;
-		av_log2;
-		av_log_set_level;
 		
-		av_lfg_init;
-		frandom;
-		
-		avresample_free;
-		av_opt_set_int;
-		avresample_open;
-		avresample_close;
-		avresample_alloc_context;
-		avresample_convert;
-		avresample_available;
-		avresample_read;
-		avresample_get_delay;
-		
-		tta_open_read;
-		tta_decoder_new;
-		tta_decoder_init_get_info;
-		tta_decoder_get_error;
-		tta_decoder_process_stream;
-		tta_decoder_set_position;
-		tta_decoder_done;
+		#av_log2;
+		av_base64_decode;
 	
 	local: *;
 };

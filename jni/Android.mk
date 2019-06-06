@@ -1,21 +1,36 @@
-# New FFMPEG
+# FFMPEG
+# NOTE: we build target (lib*) folders only if Android.mk is there and not disabled
 
 LOCAL_PATH := $(call my-dir)
 GLOBAL_PATH := $(call my-dir)
 
 USE_VERSION := #yes # Enables build.version based versioning. Ffmpeg requires this to be in sync
 
+FFMPEG_ROOT := ../FFmpeg
+FFMPEG_OVERRIDE_ROOT := $(LOCAL_PATH) # This dir, basically
+
 include $(LOCAL_PATH)/config-pamp.mak
 
-GLOBAL_FLTO := false # NOTE: flto doesn't work with ffmpeg properly (28-05-2014, gcc 4.9/NDK 10e) 
+GLOBAL_FLTO := false # NOTE: flto doesn't work with ffmpeg properly (28-05-2014, gcc 4.9/NDK 10e)
 
-GLOBAL_CFLAGS := -std=c99 -ffast-math -fstrict-aliasing -Werror=strict-aliasing -Os
+GLOBAL_APPLY_FFMPEG_OPTS := true
+
+GLOBAL_CFLAGS := -std=c99 -ffast-math -fstrict-aliasing -Werror=strict-aliasing -Os #-mfix-cortex-a53-835769 -mfix-cortex-a53-843419 -mstrict-align 
 # NOTE: these are needed just for ffmpeg compilation - shouldn't be replicated to any other code   
-# Also, PAMP_* there shouldn't be used in (outside accessible) headers 
-GLOBAL_CFLAGS += -DHAVE_AV_CONFIG_H -DPAMP_CONFIG_NO_VIDEO=1  -DPAMP_CONFIG_FLOAT_ONLY_RESAMPLER=1 -DPAMP_CHANGES=1
-GLOBAL_CFLAGS += -DPAMP_CONFIG_NO_TAGS=1 -DPAMP_FFMPEG_STUBS=0 
+# Also, PAMP_* there shouldn't be used in (outside accessible) headers
+GLOBAL_CFLAGS += -DHAVE_AV_CONFIG_H 
+# NOTE: don't expose any paths to .so 
 
-# NOTE: PAMP_FFMPEG_STUBS=0 needed for mpc
+#NOTE: disables inclusion of termbits.h, which defines macros like B0, which conflict with FFmpeg code
+GLOBAL_CFLAGS += -D__ASM_GENERIC_TERMBITS_H
+
+ifeq ($(GLOBAL_APPLY_FFMPEG_OPTS),true)
+GLOBAL_CFLAGS += -DPAMP_CONFIG_NO_VIDEO=1  -DPAMP_CONFIG_FLOAT_ONLY_RESAMPLER=1 -DPAMP_CHANGES=1 -DPAMP_CONFIG_NO_TAGS=1
+GLOBAL_CFLAGS += -D__FILE__=\"\" -Wno-builtin-macro-redefined
+else
+$(warning no GLOBAL_APPLY_FFMPEG_OPTS)
+endif
+
 #GLOBAL_CFLAGS += -fprofile-generate=/sdcard/profile # NOTE: doesn't give anything in terms of perf.
 #GLOBAL_CFLAGS += -fprofile-use=../../profile -fprofile-correction
 
@@ -30,7 +45,7 @@ endif
 # NOTE: there is GLOBAL_TARGET_ARCH_NAME (armeabi-v7a/arm64-v8a), TARGET_ARCH (arm/arm64), and ARCH (arm/aarch64) + GLOBAL_ARCH_MODE(neon/arm64)
 
 ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
-	GLOBAL_CFLAGS += -march=armv8-a+simd -D_NDK_MATH_NO_SOFTFP=1
+	GLOBAL_CFLAGS += -march=armv8-a+simd #-D_NDK_MATH_NO_SOFTFP=1
 	GLOBAL_CFLAGS += -DHAVE_ARMV8=1 -DHAVE_NEON=1
 	GLOBAL_TARGET_ARCH_NAME := arm64-v8a 
 	
@@ -57,23 +72,23 @@ GLOBAL_LDFLAGS := $(GLOBAL_CFLAGS)
 
 
 # MaxMP: redefine this macro to avoid inclusion of the project dir as headers dir - this breaks ffmpeg build.
-define  ev-compile-c-source
-_SRC:=$$(LOCAL_PATH)/$(1)
-_OBJ:=$$(LOCAL_OBJS_DIR)/$(2)
-
-_FLAGS := $$($$(my)CFLAGS) \
-          $$(call get-src-file-target-cflags,$(1)) \
-          $$(call host-c-includes,$$(LOCAL_C_INCLUDES)) \
-          $$(LOCAL_CFLAGS) \
-          $$(NDK_APP_CFLAGS) \
-          $$(call host-c-includes,$$($(my)C_INCLUDES)) \
-          -c \
-
-_TEXT := "Compile $$(call get-src-file-text,$1)"
-_CC   := $$(NDK_CCACHE) $$(TARGET_CC)
-
-$$(eval $$(call ev-build-source-file))
-endef
+#define  ev-compile-c-source
+#_SRC:=$$(LOCAL_PATH)/$(1)
+#_OBJ:=$$(LOCAL_OBJS_DIR)/$(2)
+#
+#_FLAGS := $$($$(my)CFLAGS) \
+#          $$(call get-src-file-target-cflags,$(1)) \
+#          $$(call host-c-includes,$$(LOCAL_C_INCLUDES)) \
+#          $$(LOCAL_CFLAGS) \
+#          $$(NDK_APP_CFLAGS) \
+#          $$(call host-c-includes,$$($(my)C_INCLUDES)) \
+#          -c \
+#
+#_TEXT := "Compile $$(call get-src-file-text,$1)"
+#_CC   := $$(NDK_CCACHE) $$(TARGET_CC)
+#
+#$$(eval $$(call ev-build-source-file))
+#endef
 
 # ============================================ Link swresample
 include $(CLEAR_VARS)
@@ -98,7 +113,7 @@ LOCAL_LDLIBS += -llog -lz
 
 #LOCAL_STATIC_LIBRARIES := libavformat libavcodec libavutil libswresample #libjni #libopus # libtta libopencore_amr
 
-LOCAL_WHOLE_STATIC_LIBRARIES := libavformat libavutil libsoxr-prebuilt libswresample-prebuilt libavcodec  #libtta #libjni NOTE: libswresample has Android.mk.disabled
+LOCAL_WHOLE_STATIC_LIBRARIES := libavformat libavutil libsoxr-prebuilt libswresample-prebuilt libavcodec #libtta #libjni NOTE: libswresample has Android.mk.disabled
 
 ifeq ($(USE_VERSION),yes)
 LOCAL_MODULE := libffmpeg_neon.$(build.number)
@@ -145,9 +160,6 @@ endif
 PAMP_DST_CLEAN := $(PAMP_DST_BASE).*
 
 PAMP_SRC := $(abspath $(LOCAL_PATH)/../libs/$(GLOBAL_TARGET_ARCH_NAME)/$(LOCAL_MODULE).so)
-
-FFMPEG_ROOT := ../ffmpeg
-JNI_ROOT := $(LOCAL_PATH)
 
 
 pamp-install-custom: installed_modules

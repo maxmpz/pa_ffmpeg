@@ -1,16 +1,23 @@
 FFMpeg Poweramp changes and building
 
-#define REDUCED_AUDIO_BUILD
-This enables partial build of ffmpeg:
-- various video APIs disabled (including structures changes, this makes ffmpeg .so not binary compatible)
-- some unnecessary static data and calculations are skept
-- some codec parts are disabled
-- image processing removed
+PAMP_CONFIG_NO_VIDEO
+- no video codecs and some video related logic is removed
 
-#define REDUCED_TAGS_BUILD
-- unnecessary tag parsing is disabled
+PAMP_CONFIG_FLOAT_ONLY_RESAMPLER
+- non-float resamples removed
 
-Build process.
+PAMP_CHANGES
+- options removed
+- some codecs patched
+
+PAMP_CONFIG_NO_TAGS
+- all tags are skipped, except replaygain and gapless
+
+PAMP_DISABLE_NEON_ASM
+- some arm + neon optimizations are skipped (as they tend to be slower on real devices)
+
+Build process:
+- use appropriate build-neon.sh or build-arm64.sh
 
 $ export ANDROID_NDK=your ndk dir (android-r10e+)
 $ cd audioplayer_ffmpeg_swresample/jni
