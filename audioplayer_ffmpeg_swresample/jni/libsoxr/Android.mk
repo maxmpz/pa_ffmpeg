@@ -29,7 +29,19 @@ LOCAL_SRC_FILES := \
 
 LOCAL_SRC_FILES := $(addprefix $(SOXR_SRC_DIR)/, $(LOCAL_SRC_FILES))
 	
-LOCAL_CFLAGS = $(GLOBAL_CFLAGS) -DSOXR_LIB -std=gnu99 -Ofast # -ftree-vectorize
+LOCAL_CFLAGS = $(PA_GLOBAL_CFLAGS) -DSOXR_LIB -std=gnu99 -Ofast
+
+ifneq (,$(findstring clang,$(NDK_TOOLCHAIN_VERSION)))
+	LOCAL_CFLAGS += -fvectorize
+endif
+
+
+ifeq ($(PA_GLOBAL_FLTO),true)
+	ifeq (,$(findstring -flto, $(LOCAL_CFLAGS)))
+$(error No -flto in LOCAL_CFLAGS=$(LOCAL_CFLAGS)) 	
+	endif
+endif
+
 
 include $(BUILD_STATIC_LIBRARY)
 

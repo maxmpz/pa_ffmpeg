@@ -80,7 +80,7 @@ static void cubic_stage_fn(stage_t * p, fifo_t * output_fifo)
   #define DEFINED_X86 0
 #endif
 
-#if defined __arm__
+#if (defined(__arm__) || defined(__aarch64__))
   #define DEFINED_ARM 1
 #else
   #define DEFINED_ARM 0

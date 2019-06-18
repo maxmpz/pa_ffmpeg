@@ -1,8 +1,10 @@
 #!/bin/bash
 
-NDK_PATH=/opt/android-ndk-r10e
+#ANDROID_NDK=/opt/android-ndk-r11c
+#ANDROID_NDK=/opt/android-ndk-r17c
+ANDROID_NDK=/opt/android-ndk-r20
 
-echo Using NDK_PATH=$NDK_PATH
+echo Using ANDROID_NDK=$ANDROID_NDK
 
-$NDK_PATH/ndk-build -j12 APP_ABI=armeabi-v7a-hard GLOBAL_ARCH_MODE=neon $*
+$ANDROID_NDK/ndk-build -j12 APP_ABI=armeabi-v7a $*
 

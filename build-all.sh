@@ -1,21 +1,14 @@
 #!/bin/bash
 
-if [[ $1 != 'arm64' && $1 != 'neon' ]] ; then
-    echo "Usage: build-all.sh neon|arm64"
+if [[ $1 != 'arm64' && $1 != 'neon' && $1 != 'neon-hard' ]] ; then
+    echo "Usage: build-all.sh arm64|neon|neon-hard"
     echo
     exit 1
 fi
 
-if [[ $1 == 'arm64' ]]; then
-CMD=./build-arm64.sh
-elif [[ $1 == 'neon' ]] ; then
-CMD=./build-neon.sh
-fi
+CMD=./build-$1.sh
 
-echo Building everything for libffmpeg_neon.so $1
-
-echo Building arm64
-echo
+echo Building everything for libffmpeg_neon.so target=$1
 
 # NOTE: not necessary to run each time as once configured, all targets keep same files around
 #pushd jni

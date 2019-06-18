@@ -1732,7 +1732,7 @@ void pffft_zconvolve_accumulate(PFFFT_Setup *s, const float *a, const float *b, 
   const v4sf * RESTRICT vb = (const v4sf*)b;
   v4sf * RESTRICT vab = (v4sf*)ab;
 
-#ifdef __arm__
+#ifdef (defined(__arm__) || defined(__aarch64__))
   __builtin_prefetch(va);
   __builtin_prefetch(vb);
   __builtin_prefetch(vab);
@@ -1745,7 +1745,7 @@ void pffft_zconvolve_accumulate(PFFFT_Setup *s, const float *a, const float *b, 
   __builtin_prefetch(va+6);
   __builtin_prefetch(vb+6);
   __builtin_prefetch(vab+6);
-# ifndef __clang__
+# ifndef __clang__ && !defined(__aarch64__)
 #   define ZCONVOLVE_USING_INLINE_NEON_ASM
 # endif
 #endif

@@ -83,7 +83,8 @@
   #define fe_clear_invalid() feclearexcept(FE_INVALID)
 #endif
 
-#if !defined FPU_RINT32
+
+  #if !defined FPU_RINT32
   #define rint32D(y,x) ((y)=(int32_t)((x) < 0? x - .5 : x + .5))
   #define rint32F(y,x) rint32D(y,(double)(x))
 #endif
