@@ -4,10 +4,20 @@
 APP_OPTIM := release
 
 APP_DEBUGGABLE := false
+APP_PLATFORM := android-21
 
-#NDK_TOOLCHAIN_VERSION := clang3.6
-NDK_TOOLCHAIN_VERSION := 4.9
-#NDK_TOOLCHAIN_VERSION := 4.8
+ifeq ($(APP_ABI),arm64-v8a)
+	NDK_TOOLCHAIN_VERSION := clang
+else
+	ifneq (,$(findstring -r20,$(ANDROID_NDK)))
+		# ndk-r20
+		NDK_TOOLCHAIN_VERSION := clang
+	else
+		NDK_TOOLCHAIN_VERSION := 4.9
+	endif
+endif
+
+
 
 # Disable cleaning everything in /libs as we need previous/other lib
 NDK_APP.local.cleaned_binaries := true

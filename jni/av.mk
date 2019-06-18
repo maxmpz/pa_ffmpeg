@@ -11,7 +11,7 @@ SUBDIR := $(FFMPEG_LOCAL_PATH)/
 ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
 include ffbuild/config-arm64.mak
 
-else ifeq ($(TARGET_ARCH_ABI),armeabi-v7a-hard)
+else ifneq (,$(findstring armeabi-v7a, $(TARGET_ARCH_ABI)))
 include ffbuild/config-neon.mak
 
 else
@@ -64,14 +64,14 @@ endif
 FFNAME := lib$(NAME)
 FFLIBS := $(foreach,NAME,$(FFLIBS),lib$(NAME))
 
-LOCAL_CFLAGS :=  \
+LOCAL_CFLAGS +=  \
 	-Wno-sign-compare -Wno-switch -Wno-pointer-sign \
 	-Wno-format -Wno-deprecated-declarations -Wno-cast-qual \
 	-Wno-parentheses  \
 	
 #	-Wno-incompatible-pointer-types -Wno-logical-op-parentheses -Wno-asm-operand-widths -Wno-unknown-warning-option  
   
-ifneq ($(GLOBAL_APPLY_FFMPEG_OPTS),true)
+ifneq ($(PA_GLOBAL_APPLY_FFMPEG_OPTS),true)
 LOCAL_OBJS_TO_REMOVE := 
 endif  
 
