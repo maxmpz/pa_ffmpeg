@@ -1,5 +1,7 @@
+#if PAMP_OPTIMIZE_MACROS
 #pragma GCC optimize ("O2")
 //#pragma GCC optimize ("-ftree-vectorize")
+#endif
 
 #if PAMP_CHANGES
 //#define ff_ape_decoder static ff_ape_decoder__

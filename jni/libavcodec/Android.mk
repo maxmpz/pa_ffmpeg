@@ -67,12 +67,17 @@ LOCAL_C_INCLUDES :=		\
 #	$(LOCAL_PATH)/../../../audioplayer_libopus/opus-1.0.1/include
 
 # funroll-loops helps a bit (-0.03% realtime) mp3, but adds 40 kb
-LOCAL_CFLAGS += $(GLOBAL_CFLAGS) #-funroll-loops #-ftree-vectorize -mvectorize-with-neon-quad 
-#LOCAL_CFLAGS += --param max-inline-insns-single=1600
-      
+LOCAL_CFLAGS += $(PA_GLOBAL_CFLAGS) #-Rpass-missed=loop-vectorize -Rpass-analysis=loop-vectorize
+
 LOCAL_STATIC_LIBRARIES := $(FFLIBS)
 
 LOCAL_MODULE := $(FFNAME)
+
+ifeq ($(PA_GLOBAL_FLTO),true)
+	ifeq (,$(findstring -flto, $(LOCAL_CFLAGS)))
+$(error No -flto in LOCAL_CFLAGS=$(LOCAL_CFLAGS)) 	
+	endif
+endif
 
 include $(BUILD_STATIC_LIBRARY)
 

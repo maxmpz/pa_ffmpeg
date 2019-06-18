@@ -41,11 +41,17 @@ LOCAL_C_INCLUDES :=		\
 	$(FFMPEG_LOCAL_PATH)/.. \
 	
 	
-LOCAL_CFLAGS += $(GLOBAL_CFLAGS)
+LOCAL_CFLAGS += $(PA_GLOBAL_CFLAGS)
 LOCAL_CFLAGS += -include "string.h" -Dipv6mr_interface=ipv6mr_ifindex
 
 LOCAL_STATIC_LIBRARIES := $(FFLIBS)
 
 LOCAL_MODULE := $(FFNAME)
+
+ifeq ($(PA_GLOBAL_FLTO),true)
+	ifeq (,$(findstring -flto, $(LOCAL_CFLAGS)))
+$(error No -flto in LOCAL_CFLAGS=$(LOCAL_CFLAGS)) 	
+	endif
+endif
 
 include $(BUILD_STATIC_LIBRARY)

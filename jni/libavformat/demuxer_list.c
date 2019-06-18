@@ -14,6 +14,8 @@ static const AVInputFormat * const demuxer_list[] = {
     &ff_matroska_demuxer,
     &ff_mov_demuxer,
     &ff_mp3_demuxer,
+    &ff_mpegts_demuxer,
+    &ff_mpegtsraw_demuxer,
     &ff_ogg_demuxer,
     &ff_pcm_alaw_demuxer,
     &ff_pcm_mulaw_demuxer,

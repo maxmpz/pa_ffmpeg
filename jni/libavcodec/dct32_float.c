@@ -1,13 +1,10 @@
 #if PAMP_OPTIMIZE_MACROS
-#pragma GCC optimize ("Os")
+#pragma GCC optimize ("Os") // NOTE: Os vs O3 here is -30ms from sample mp3 decoding
 //#pragma GCC optimize ("-funroll-loops")
 //#pragma GCC optimize ("-funroll-all-loops")
-//#pragma GCC optimize ("-ftree-vectorize")
 //#pragma GCC optimize ("-fno-tree-vectorize")
 //#pragma GCC optimize ("-ftree-loop-if-convert-stores")
-//#pragma GCC optimize ("-fno-tree-loop-if-convert")
+//#pragma GCC optimize ("-ftree-vectorize")
 #endif
 
-#include "libavutil/avassert.h"
-#include "../FFMpeg/libavcodec/mpegaudiodsp_float.c"
-
+#include "../../FFmpeg/libavcodec/dct32_float.c"

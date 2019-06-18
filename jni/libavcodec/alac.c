@@ -1,4 +1,9 @@
+#if !PAMP_CHANGES
+#include "../../FFmpeg/libavcodec/alac.c"
+#else
+#if PAMP_OPTIMIZE_MACROS
 #pragma GCC optimize ("O3")
+#endif
 
 /*
  * ALAC (Apple Lossless Audio Codec) decoder
@@ -69,9 +74,9 @@ typedef struct ALACContext {
     GetBitContext gb;
     int channels;
 
-    int32_t *predict_error_buffer[2];
-    int32_t *output_samples_buffer[2];
-    int32_t *extra_bits_buffer[2];
+    int32_t * __restrict__ predict_error_buffer[2];
+    int32_t * __restrict__ output_samples_buffer[2];
+    int32_t * __restrict__ extra_bits_buffer[2];
 
     uint32_t max_samples_per_frame;
     uint8_t  sample_size;
@@ -111,13 +116,14 @@ static inline unsigned int decode_scalar(GetBitContext *gb, int k, int bps)
     return x;
 }
 
-static int rice_decompress(ALACContext *alac, int32_t *output_buffer,
-                            int nb_samples, int bps, int rice_history_mult)
+static int rice_decompress(ALACContext * __restrict__ alac, int32_t * __restrict__ output_buffer,
+                            const int nb_samples, const int bps, const int rice_history_mult)
 {
     int i;
     unsigned int history = alac->rice_initial_history;
     int sign_modifier = 0;
 
+    #pragma clang loop unroll_count(2)
     for (i = 0; i < nb_samples; i++) {
         int k;
         unsigned int x;
@@ -173,9 +179,9 @@ static inline int sign_only(int v)
     return v ? FFSIGN(v) : 0;
 }
 
-static void lpc_prediction(int32_t *error_buffer, int32_t *buffer_out,
-                           int nb_samples, int bps, int16_t *lpc_coefs,
-                           int lpc_order, int lpc_quant)
+static void lpc_prediction(int32_t * __restrict__ error_buffer, int32_t * __restrict__ buffer_out,
+                           const int nb_samples, const int bps, int16_t * __restrict__ lpc_coefs,
+                           const int lpc_order, const int lpc_quant)
 {
     int i;
     int32_t *pred = buffer_out;
@@ -194,6 +200,7 @@ static void lpc_prediction(int32_t *error_buffer, int32_t *buffer_out,
 
     if (lpc_order == 31) {
         /* simple 1st-order prediction */
+		#pragma clang loop unroll_count(4)
         for (i = 1; i < nb_samples; i++) {
             buffer_out[i] = sign_extend(buffer_out[i - 1] + error_buffer[i],
                                         bps);
@@ -202,19 +209,21 @@ static void lpc_prediction(int32_t *error_buffer, int32_t *buffer_out,
     }
 
     /* read warm-up samples */
+	#pragma clang loop unroll_count(4)
     for (i = 1; i <= lpc_order && i < nb_samples; i++)
         buffer_out[i] = sign_extend(buffer_out[i - 1] + error_buffer[i], bps);
 
     /* NOTE: 4 and 8 are very common cases that could be optimized. */
 
+    #pragma clang loop unroll_count(4)
     for (; i < nb_samples; i++) {
         int j;
         int val = 0;
         int error_val = error_buffer[i];
-        int error_sign;
         int d = *pred++;
 
         /* LPC prediction */
+        #pragma clang loop unroll_count(2)
         for (j = 0; j < lpc_order; j++)
             val += (pred[j] - d) * lpc_coefs[j];
         val = (val + (1 << (lpc_quant - 1))) >> lpc_quant;
@@ -222,8 +231,9 @@ static void lpc_prediction(int32_t *error_buffer, int32_t *buffer_out,
         buffer_out[i] = sign_extend(val, bps);
 
         /* adapt LPC coefficients */
-        error_sign = sign_only(error_val);
+        const int error_sign = sign_only(error_val);
         if (error_sign) {
+        	#pragma clang loop unroll_count(4)
             for (j = 0; j < lpc_order && error_val * error_sign > 0; j++) {
                 int sign;
                 val  = d - pred[j];
@@ -236,11 +246,12 @@ static void lpc_prediction(int32_t *error_buffer, int32_t *buffer_out,
     }
 }
 
-static int decode_element(AVCodecContext *avctx, AVFrame *frame, int ch_index,
-                          int channels)
+static int decode_element(AVCodecContext *avctx, AVFrame *frame, const int ch_index,
+                          const int channels)
 {
     ALACContext *alac = avctx->priv_data;
     int has_size, bps, is_compressed, decorr_shift, decorr_left_weight, ret;
+
     uint32_t output_samples;
     int i, ch;
 
@@ -281,6 +292,8 @@ static int decode_element(AVCodecContext *avctx, AVFrame *frame, int ch_index,
         return AVERROR_INVALIDDATA;
     }
     alac->nb_samples = output_samples;
+    const int nb_samples = output_samples;
+
     if (alac->direct_output) {
         for (ch = 0; ch < channels; ch++)
             alac->output_samples_buffer[ch] = (int32_t *)frame->extended_data[ch_index + ch];
@@ -312,21 +325,24 @@ static int decode_element(AVCodecContext *avctx, AVFrame *frame, int ch_index,
                 return AVERROR_INVALIDDATA;
 
             /* read the predictor table */
+            #pragma clang loop unroll_count(4)
             for (i = lpc_order[ch] - 1; i >= 0; i--)
                 lpc_coefs[ch][i] = get_sbits(&alac->gb, 16);
         }
 
         if (alac->extra_bits) {
-            for (i = 0; i < alac->nb_samples; i++) {
+            #pragma clang loop unroll_count(8) distribute(enable) vectorize(assume_safety)
+        	for (i = 0; i < nb_samples; i++) {
                 if(get_bits_left(&alac->gb) <= 0)
                     return AVERROR_INVALIDDATA;
+                #pragma clang loop unroll_count(2)
                 for (ch = 0; ch < channels; ch++)
                     alac->extra_bits_buffer[ch][i] = get_bits(&alac->gb, alac->extra_bits);
             }
         }
         for (ch = 0; ch < channels; ch++) {
             int ret=rice_decompress(alac, alac->predict_error_buffer[ch],
-                            alac->nb_samples, bps,
+                            nb_samples, bps,
                             rice_history_mult[ch] * alac->rice_history_mult / 4);
             if(ret<0)
                 return ret;
@@ -342,18 +358,19 @@ static int decode_element(AVCodecContext *avctx, AVFrame *frame, int ch_index,
                  */
                 lpc_prediction(alac->predict_error_buffer[ch],
                                alac->predict_error_buffer[ch],
-                               alac->nb_samples, bps, NULL, 31, 0);
+                               nb_samples, bps, NULL, 31, 0);
             } else if (prediction_type[ch] > 0) {
                 av_log(avctx, AV_LOG_WARNING, "unknown prediction type: %i\n",
                        prediction_type[ch]);
             }
             lpc_prediction(alac->predict_error_buffer[ch],
-                           alac->output_samples_buffer[ch], alac->nb_samples,
+                           alac->output_samples_buffer[ch], nb_samples,
                            bps, lpc_coefs[ch], lpc_order[ch], lpc_quant[ch]);
         }
     } else {
         /* not compressed, easy case */
-        for (i = 0; i < alac->nb_samples; i++) {
+    	#pragma clang loop unroll_count(8) distribute(enable) vectorize(assume_safety)
+        for (i = 0; i < nb_samples; i++) {
             if(get_bits_left(&alac->gb) <= 0)
                 return AVERROR_INVALIDDATA;
             for (ch = 0; ch < channels; ch++) {
@@ -369,7 +386,7 @@ static int decode_element(AVCodecContext *avctx, AVFrame *frame, int ch_index,
     if (channels == 2) {
         if (alac->extra_bits && alac->extra_bit_bug) {
             alac->dsp.append_extra_bits[1](alac->output_samples_buffer, alac->extra_bits_buffer,
-                                           alac->extra_bits, channels, alac->nb_samples);
+                                           alac->extra_bits, channels, nb_samples);
         }
 
         if (decorr_left_weight) {
@@ -379,30 +396,32 @@ static int decode_element(AVCodecContext *avctx, AVFrame *frame, int ch_index,
 
         if (alac->extra_bits && !alac->extra_bit_bug) {
             alac->dsp.append_extra_bits[1](alac->output_samples_buffer, alac->extra_bits_buffer,
-                                           alac->extra_bits, channels, alac->nb_samples);
+                                           alac->extra_bits, channels, nb_samples);
         }
     } else if (alac->extra_bits) {
         alac->dsp.append_extra_bits[0](alac->output_samples_buffer, alac->extra_bits_buffer,
-                                       alac->extra_bits, channels, alac->nb_samples);
+                                       alac->extra_bits, channels, nb_samples);
     }
-
     switch(alac->sample_size) {
     case 16: {
+        #pragma clang loop unroll_count(2) distribute(enable) vectorize(assume_safety)
         for (ch = 0; ch < channels; ch++) {
-            int16_t *outbuffer = (int16_t *)frame->extended_data[ch_index + ch];
-            for (i = 0; i < alac->nb_samples; i++)
+            int16_t * __restrict__ outbuffer = (int16_t *)frame->extended_data[ch_index + ch];
+            for (i = 0; i < nb_samples; i++)
                 *outbuffer++ = alac->output_samples_buffer[ch][i];
         }}
         break;
     case 20: {
+    	#pragma clang loop unroll_count(2) distribute(enable) vectorize(assume_safety)
         for (ch = 0; ch < channels; ch++) {
-            for (i = 0; i < alac->nb_samples; i++)
+            for (i = 0; i < nb_samples; i++)
                 alac->output_samples_buffer[ch][i] <<= 12;
         }}
         break;
     case 24: {
+    	#pragma clang loop distribute(enable) vectorize(assume_safety)
         for (ch = 0; ch < channels; ch++) {
-            for (i = 0; i < alac->nb_samples; i++)
+            for (i = 0; i < nb_samples; i++)
                 alac->output_samples_buffer[ch][i] <<= 8;
         }}
         break;
@@ -473,6 +492,7 @@ static int alac_decode_frame(AVCodecContext *avctx, void *data,
 static av_cold int alac_decode_close(AVCodecContext *avctx)
 {
     ALACContext *alac = avctx->priv_data;
+
 
     int ch;
     for (ch = 0; ch < FFMIN(alac->channels, 2); ch++) {
@@ -639,3 +659,4 @@ AVCodec ff_alac_decoder = {
     .capabilities   = AV_CODEC_CAP_DR1 | AV_CODEC_CAP_FRAME_THREADS,
     .priv_class     = &alac_class
 };
+#endif
