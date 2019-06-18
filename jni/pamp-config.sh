@@ -147,6 +147,8 @@ $FFMPEG_PATH/configure --target-os=linux \
 --enable-demuxer=dsf \
 --enable-demuxer=iff \
 --enable-demuxer=matroska \
+--enable-demuxer=mpegts \
+--enable-demuxer=mpegtsraw \
 \
 --enable-demuxer=wav \
 --enable-demuxer=flv \

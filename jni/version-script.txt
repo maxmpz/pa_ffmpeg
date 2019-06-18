@@ -12,6 +12,8 @@
 		avcodec_find_decoder;
 		avcodec_open2;
 		av_dump_format;
+		avcodec_configuration;
+		swresample_configuration;
 		#av_log;
 		av_get_profile_name;
 		#av_malloc;
