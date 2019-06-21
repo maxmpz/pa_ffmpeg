@@ -8,15 +8,19 @@ if [[ $1 ==  'arm64' ]] ; then
 elif [[ $1 == 'neon' ]] ; then
 	echo "Config: neon"
 	echo
+
+elif [[ $1 == 'x64' ]] ; then
+	echo "Config: x64"
+	echo
 	
 else 
-    echo "Usage: pamp-config.sh neon|arm64"
+    echo "Usage: pamp-config.sh neon|arm64|x64"
     echo
     exit 1
 fi
 
 FFMPEG_PATH=../FFmpeg
-NDK_PATH=/opt/android-ndk-r10e
+NDK_PATH=/opt/android-ndk-r11c
 GCC_VER=4.9
 
 if [[ $1 ==  'arm64' ]] ; then
@@ -53,6 +57,21 @@ elif [[ $1 == 'neon' ]] ; then
 		-llog -lz -lc \
 		-Wl,--no-warn-mismatch -lm_hard"
 	TARGET_CONFIG_FILENAME=config-neon
+	
+elif [[ $1 == 'x64' ]] ; then
+	FFMPEG_ARCH=aarch64
+	PLATFORM=$NDK_PATH/platforms/android-21/arch-x86_64
+	EABI=x86_64-4.9
+	ARM_FF_FLAGS="-march=armv8-a+simd -O3 -D_NDK_MATH_NO_SOFTFP=1 "	
+	PREBUILT=$NDK_PATH/toolchains/$EABI/prebuilt/darwin-x86_64
+	GCC_PREFIX=aarch64-linux-android-
+	LDFLAGS="--sysroot=$PLATFORM \
+		-Wl,--no-whole-archive $PREBUILT/lib/gcc/aarch64-linux-android/$GCC_VER/libgcc.a \
+		-Wl,--no-undefined -Wl,-z,noexecstack -L$PLATFORM/usr/lib \
+		-llog -lz -lc \
+		-Wl,--no-warn-mismatch -lm"
+	TARGET_CONFIG_FILENAME=config-arm64	
+	
 fi
 
 
@@ -152,6 +171,7 @@ $FFMPEG_PATH/configure --target-os=linux \
 \
 --enable-demuxer=wav \
 --enable-demuxer=flv \
+--enable-demuxer=live_flv \
 --enable-demuxer=mp3 \
 --enable-demuxer=mov \
 --enable-demuxer=asf \
@@ -165,7 +185,6 @@ $FFMPEG_PATH/configure --target-os=linux \
 --enable-parser=mpegaudio \
 --enable-parser=gsm \
 --enable-parser=mlp \
---enable-parser=truehd \
 \
 --enable-decoder=pcm_s8 \
 --enable-decoder=pcm_s8_planar \
