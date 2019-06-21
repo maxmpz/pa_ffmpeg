@@ -26,6 +26,11 @@
  * http://id3.org/Developer_Information
  */
 
+#include <android/log.h>
+#define LOG_TAG "id3v2.c"
+#define DLOG(...) //__android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
+#define __FUNC__ __FUNCTION__
+
 #include "config.h"
 
 #if CONFIG_ZLIB
@@ -337,6 +342,7 @@ static void read_ttag(AVFormatContext *s, AVIOContext *pb, int taglen,
 
 #if PAMP_CONFIG_NO_TAGS // Begin PAMP change - skip everything unrelated to replaygain
     key = dst;
+    DLOG("%s key=%s", __FUNC__, key);
     if(strncmp(key, "engiTun", 7) == 0 || strncmp(key, "replaygain_", 11) == 0) {
 #else
     if (!(strcmp(key, "TCON") && strcmp(key, "TCO"))                         &&

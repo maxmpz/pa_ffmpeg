@@ -19,6 +19,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
+#include <android/log.h>
+#define LOG_TAG "af flacdec.c"
+#define DLOG(...) //__android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
+#define __FUNC__ __FUNCTION__
+
 #include "libavcodec/flac.h"
 #include "avformat.h"
 #include "flac_picture.h"
@@ -65,8 +70,10 @@ static int flac_read_header(AVFormatContext *s)
 
     /* process metadata blocks */
     while (!avio_feof(s->pb) && !metadata_last) {
-        if (avio_read(s->pb, header, 4) != 4)
+        if (avio_read(s->pb, header, 4) != 4) {
+        	DLOG("%s FAIL", __FUNC__);
             return AVERROR(AVERROR_INVALIDDATA);
+        }
         flac_parse_block_header(header, &metadata_last, &metadata_type,
                                    &metadata_size);
         switch (metadata_type) {
@@ -90,6 +97,7 @@ static int flac_read_header(AVFormatContext *s)
 
         	unsigned imgSize = avio_rb32(s->pb);
         	if(imgSize >= 0) {
+        		DLOG("%s imgSize=%u metadata_size=%d", __FUNC__, imgSize, metadata_size);
         		avio_seek(s->pb, imgSize, SEEK_CUR);
         	}
 
@@ -134,9 +142,13 @@ static int flac_read_header(AVFormatContext *s)
 
             /* STREAMINFO can only occur once */
             if (found_streaminfo) {
+            	DLOG("%s FAIL", __FUNC__);
+#if !PAMP_CHANGES // PAMP change: don't do anything - there are files like that in the wild (815-flac-not-played)
                 RETURN_ERROR(AVERROR_INVALIDDATA);
+#endif
             }
             if (metadata_size != FLAC_STREAMINFO_SIZE) {
+            	DLOG("%s FAIL 2", __FUNC__);
                 RETURN_ERROR(AVERROR_INVALIDDATA);
             }
             found_streaminfo = 1;
@@ -160,22 +172,31 @@ static int flac_read_header(AVFormatContext *s)
             uint64_t start;
             const uint8_t *offset;
             int i, chapters, track, ti;
-            if (metadata_size < 431)
+            if (metadata_size < 431) {
+            	DLOG("%s FAIL 3", __FUNC__);
                 RETURN_ERROR(AVERROR_INVALIDDATA);
+            }
             offset = buffer + 395;
             chapters = bytestream_get_byte(&offset) - 1;
-            if (chapters <= 0)
+            if (chapters <= 0) {
+            	DLOG("%s FAIL 4", __FUNC__);
                 RETURN_ERROR(AVERROR_INVALIDDATA);
+            }
             for (i = 0; i < chapters; i++) {
-                if (offset + 36 - buffer > metadata_size)
+                if (offset + 36 - buffer > metadata_size) {
+                	DLOG("%s FAIL 5", __FUNC__);
                     RETURN_ERROR(AVERROR_INVALIDDATA);
+                }
                 start = bytestream_get_be64(&offset);
                 track = bytestream_get_byte(&offset);
                 bytestream_get_buffer(&offset, isrc, 12);
                 isrc[12] = 0;
                 offset += 14;
                 ti = bytestream_get_byte(&offset);
-                if (ti <= 0) RETURN_ERROR(AVERROR_INVALIDDATA);
+                if (ti <= 0) {
+                	DLOG("%s FAIL 6", __FUNC__);
+                	RETURN_ERROR(AVERROR_INVALIDDATA);
+                }
                 offset += ti * 12;
                 avpriv_new_chapter(s, track, st->time_base, start, AV_NOPTS_VALUE, isrc);
             }
@@ -211,6 +232,7 @@ static int flac_read_header(AVFormatContext *s)
 
             /* STREAMINFO must be the first block */
             if (!found_streaminfo) {
+            	DLOG("%s FAIL 7", __FUNC__);
                 RETURN_ERROR(AVERROR_INVALIDDATA);
             }
             /* process supported blocks other than STREAMINFO */
@@ -241,9 +263,11 @@ static int flac_read_header(AVFormatContext *s)
         }
     }
 
+#if !PAMP_CONFIG_NO_TAGS
     ret = ff_replaygain_export(st, s->metadata);
     if (ret < 0)
         return ret;
+#endif
 
     reset_index_position(avio_tell(s->pb), st);
     return 0;
