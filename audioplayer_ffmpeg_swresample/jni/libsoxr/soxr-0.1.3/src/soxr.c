@@ -14,6 +14,9 @@
   #include <libavutil/cpu.h>
 #endif
 
+#include <android/log.h>
+#define LOG_TAG "soxr.c"
+#define DLOG(...) //__android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
 
 
 #if WITH_DEV_TRACE
@@ -624,6 +627,7 @@ soxr_error_t soxr_clear(soxr_t p) /* TODO: this, properly. */
 static void soxr_input_1ch(soxr_t p, unsigned i, soxr_cbuf_t src, size_t len)
 {
   sample_t * dest = resampler_input(p->resamplers[i], NULL, len);
+  DLOG("%s i=%d dest=%p len=%zu", __func__, i, dest, len);
   (*p->deinterleave)(&dest, p->io_spec.itype, &src, len, 1);
 }
 
@@ -633,6 +637,7 @@ static size_t soxr_input(soxr_t p, void const * in, size_t len)
 {
   bool separated = !!(p->io_spec.itype & SOXR_SPLIT);
   unsigned i;
+  DLOG("%s in=%p len=%zu p->flushing=%d", __func__, in, len, p->flushing);
   if (!p || p->error) return 0;
   if (!in && len) {p->error = "null input buffer pointer"; return 0;}
   if (!len) {
@@ -719,7 +724,10 @@ size_t soxr_output(soxr_t p, void * out, size_t len0)
     was_flushing = p->flushing;
     if (!in)
       p->error = "input function reported failure";
-    else soxr_input(p, in, idone);
+    else {
+    	DLOG("%s => soxr_input in=%p idone=%zu", __func__, in, idone);
+    	soxr_input(p, in, idone);
+    }
   } while (odone || idone || (!was_flushing && p->flushing));
   return odone0;
 }
@@ -760,9 +768,12 @@ soxr_error_t soxr_process(soxr_t p,
 
   if (!p) return "null pointer";
 
-  if (!in)
+  DLOG("%s p=%p in=%p ilen0=%zu p->flushing=%d", __func__, p, in, ilen0, p->flushing);
+
+  if (!in || p->flushing) {// MaxMP: 833 - once we're flushing, we can't accept any samples anymore (if accepted, we'll crash due to fifo not providing buffers for input)
     flush_requested = true, ilen = ilen0 = 0;
-  else {
+    in = NULL; // MaxMP
+  } else {
     if ((ptrdiff_t)ilen0 < 0)
       flush_requested = true, ilen0 = ~ilen0;
     if (idone0 && (1 || flush_requested))
@@ -789,18 +800,24 @@ soxr_error_t soxr_process(soxr_t p,
     } else
 #endif
     for (u = 0; u < p->num_channels; ++u) {
-      if (in)
+      if (in) {
+        if(ilen) DLOG("%s p=%p => soxr_input_1ch in=%p ilen=%zu", __func__, p, ((soxr_cbufs_t)in)[u], ilen);
         soxr_input_1ch(p, u, ((soxr_cbufs_t)in)[u], ilen);
+      }
       odone = soxr_output_1ch(p, u, ((soxr_bufs_t)out)[u], olen, true);
     }
     idone = ilen;
   }
   else {
-    idone = ilen? soxr_input (p, in , ilen) : 0;
+    if(ilen) DLOG("%s => soxr_input in=%p ilen=%zu", __func__, in, ilen);
+	idone = ilen? soxr_input (p, in , ilen) : 0;
     odone = soxr_output(p, out, olen);
   }
   if (idone0) *idone0 = idone;
   if (odone0) *odone0 = odone;
+
+  DLOG("%s p=%p DONE", __func__, p);
+
   return p->error;
 }
 
