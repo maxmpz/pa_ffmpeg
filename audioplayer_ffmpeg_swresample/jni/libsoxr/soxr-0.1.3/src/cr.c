@@ -17,6 +17,10 @@
 
 #include "cr.h"
 
+#include <android/log.h>
+#define LOG_TAG "cr.c"
+#define DLOG(...) //__android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
+
 #define num_coefs4 ((core_flags&CORE_SIMD_POLY)? ((num_coefs+3)&~3) : num_coefs)
 
 #define coef_coef(C,T,x) \
@@ -524,8 +528,10 @@ STATIC void _soxr_process(rate_t * p, size_t olen)
 
 STATIC real * _soxr_input(rate_t * p, real const * samples, size_t n)
 {
-  if (p->flushing)
+  if (p->flushing) {
+	DLOG("%s flushing", __func__);
     return 0;
+  }
   p->samples_in += (int64_t)n;
   return fifo_write(&p->stages[0].fifo, (int)n, samples);
 }

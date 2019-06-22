@@ -8,6 +8,10 @@
 #include "data-io.h"
 #include "internal.h"
 
+#include <android/log.h>
+#define LOG_TAG "data-io.c"
+#define DLOG(...) //__android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
+#define __FUNC__ __FUNCTION__
 
 
 #define DEINTERLEAVE_FROM(T,flag) do { \
@@ -16,7 +20,7 @@
   T const * src = *src0; \
   if (ch > 1) for (j = 0; j < n; ++j) \
     for (i = 0; i < ch; ++i) dest[i][j] = (DEINTERLEAVE_TO)*src++; \
-  else if (flag) memcpy(dest[0], src, n * sizeof(T)), src = &src[n]; \
+  else if (flag) { DLOG("%s memcpy dest[0]=%p src=%p size=%zu dest", __FUNC__, dest[0], src, n * sizeof(T)); memcpy(dest[0], src, n * sizeof(T)), src = &src[n]; } \
   else for (j = 0; j < n; dest[0][j++] = (DEINTERLEAVE_TO)*src++); \
   *src0 = src; \
 } while (0)
