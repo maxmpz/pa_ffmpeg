@@ -395,7 +395,11 @@ static int pipe_open(URLContext *h, const char *filename, int flags)
     setmode(fd, O_BINARY);
 #endif
     c->fd = fd;
+#if PAMP_CHANGES // PAMP change: allow seeks for pipe protocol
+    h->is_streamed = 0;
+#else
     h->is_streamed = 1;
+#endif
     return 0;
 }
 
@@ -404,6 +408,9 @@ const URLProtocol ff_pipe_protocol = {
     .url_open            = pipe_open,
     .url_read            = file_read,
     .url_write           = file_write,
+#if PAMP_CHANGES // PAMP change: allow seeks for pipe protocol
+	.url_seek            = file_seek,
+#endif
     .url_get_file_handle = file_get_handle,
     .url_check           = file_check,
     .priv_data_size      = sizeof(FileContext),
