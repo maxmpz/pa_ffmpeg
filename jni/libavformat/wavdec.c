@@ -503,6 +503,9 @@ static int wav_read_header(AVFormatContext *s)
             break;
         case MKTAG('I', 'D', '3', ' '):
         case MKTAG('i', 'd', '3', ' '): {
+#if PAMP_CONFIG_NO_TAGS
+        	ff_id3v2_read_dict(pb, &s->internal->id3v2_meta, ID3v2_DEFAULT_MAGIC, NULL);
+#else
             ID3v2ExtraMeta *id3v2_extra_meta = NULL;
             ff_id3v2_read_dict(pb, &s->internal->id3v2_meta, ID3v2_DEFAULT_MAGIC, &id3v2_extra_meta);
             if (id3v2_extra_meta) {
@@ -511,6 +514,7 @@ static int wav_read_header(AVFormatContext *s)
                 ff_id3v2_parse_priv(s, &id3v2_extra_meta);
             }
             ff_id3v2_free_extra_meta(&id3v2_extra_meta);
+#endif
             }
             break;
         }
@@ -590,8 +594,10 @@ break_loop:
         st->codecpar->block_align = 2048;
     }
 
+#if !PAMP_CONFIG_NO_TAGS
     ff_metadata_conv_ctx(s, NULL, wav_metadata_conv);
     ff_metadata_conv_ctx(s, NULL, ff_riff_info_conv);
+#endif
 
     set_spdif(s, wav);
 

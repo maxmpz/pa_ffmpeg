@@ -23,7 +23,7 @@
 
 av_cold void ff_vorbisdsp_init(VorbisDSPContext *dsp)
 {
-#if PAMP_CHANGES && !ARCH_ARM && !ARCH_AARCH64 && !ARCH_PPC && !ARCH_X86
+#if !PAMP_CHANGES || !ARCH_ARM && !ARCH_AARCH64 && !ARCH_PPC && !ARCH_X86
     dsp->vorbis_inverse_coupling = ff_vorbis_inverse_coupling;
 #endif
     if (ARCH_AARCH64)
