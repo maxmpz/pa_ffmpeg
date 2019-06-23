@@ -370,6 +370,7 @@ soxr_t soxr_create(
 {
   double io_ratio = output_rate!=0? input_rate!=0?
     input_rate / output_rate : -1 : input_rate!=0? -1 : 0;
+  DLOG("%s io_ratio=%f", __func__, io_ratio);
   static const float datatype_full_scale[] = {1, 1, 65536.*32768, 32768};
   soxr_t p = 0;
   soxr_error_t error = 0;
@@ -529,6 +530,7 @@ static soxr_error_t fatal_error(soxr_t p, soxr_error_t error)
 
 static soxr_error_t initialise(soxr_t p)
 {
+  DLOG("%s p=%p", __func__, p);
   unsigned i;
   size_t shared_size, channel_size;
 
@@ -578,6 +580,7 @@ soxr_error_t soxr_set_io_ratio(soxr_t p, double io_ratio, size_t slew_len)
   if ((error = p->error)) return error;
   if (!p->num_channels)   return "must set # channels before O/I ratio";
   if (io_ratio <= 0)      return "I/O ratio out-of-range";
+  DLOG("%s p=%p p->channel_ptrs=%p", __func__, p, p->channel_ptrs);
   if (!p->channel_ptrs) {
     p->io_ratio = io_ratio;
     return initialise(p);
@@ -616,8 +619,15 @@ soxr_error_t soxr_clear(soxr_t p) /* TODO: this, properly. */
     memcpy(p->control_block, tmp.control_block, sizeof(p->control_block));
     p->deinterleave = tmp.deinterleave;
     p->interleave = tmp.interleave;
+
+    DLOG("%s p=%p p->channel_ptrs=%p", __func__, p, p->channel_ptrs);
+
+#if PAMP_CHANGES // MaxMP: resamples always cleared/freed, but not all code paths will recreate them, so force recreate them now, not just when RESET_ON_CLEAR is set
+    return soxr_set_io_ratio(p, tmp.io_ratio, 0);
+#else
     return (p->q_spec.flags & RESET_ON_CLEAR)?
       soxr_set_io_ratio(p, tmp.io_ratio, 0) : 0;
+#endif
   }
   return "invalid soxr_t pointer";
 }
@@ -626,6 +636,7 @@ soxr_error_t soxr_clear(soxr_t p) /* TODO: this, properly. */
 
 static void soxr_input_1ch(soxr_t p, unsigned i, soxr_cbuf_t src, size_t len)
 {
+  DLOG("%s i=%d p->resamplers=%p", __func__, i, p->resamplers);
   sample_t * dest = resampler_input(p->resamplers[i], NULL, len);
   DLOG("%s i=%d dest=%p len=%zu", __func__, i, dest, len);
   (*p->deinterleave)(&dest, p->io_spec.itype, &src, len, 1);
