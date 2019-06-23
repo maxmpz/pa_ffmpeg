@@ -29,6 +29,11 @@
 
 #include <soxr.h>
 
+#include <android/log.h>
+#define LOG_TAG "soxr_resample.c"
+#define DLOG(...) //__android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
+
+
 static struct ResampleContext *create(struct ResampleContext *c, int out_rate, int in_rate, int filter_size, int phase_shift, int linear,
         double cutoff, enum AVSampleFormat format, enum SwrFilterType filter_type, double kaiser_beta, double precision, int cheby, int exact_rational){
     soxr_error_t error;
@@ -81,7 +86,15 @@ static int flush(struct SwrContext *s){
 #else
     // PAMP change: properly flush soxr. NOTE: after flushing, soxr is unable to process further inbound samples as it stays in flushing mode and it will crash
     // if more in samples feeded into it. soxr_clear properly clears it without complete rebuilding
-	soxr_clear((soxr_t)s->resample);
+    soxr_clear((soxr_t)s->resample);
+
+    // NOTE: soxr_clear clears internal soxr resamplers struct and few other components, so soxr is in uninitialized state now. This happens for some quality / SR combinations, not always.
+    // Force it to initialize state (as otherwise, calling flush again will crash us)
+
+    soxr_error_t error = soxr_set_error((soxr_t)s->resample, soxr_set_num_channels((soxr_t)s->resample, s->in.ch_count));
+    error = soxr_set_error((soxr_t)s->resample, soxr_set_io_ratio((soxr_t)s->resample, 1.0, 0));
+
+    DLOG("%s soxr=%p error=%s", __func__, s->resample, error);
 #endif
 
     return 0;
@@ -91,6 +104,9 @@ static int process(
         struct ResampleContext * c, AudioData *dst, int dst_size,
         AudioData *src, int src_size, int *consumed){
     size_t idone, odone;
+
+    DLOG("%s soxr=%p", __func__, c);
+
     soxr_error_t error = soxr_set_error((soxr_t)c, soxr_set_num_channels((soxr_t)c, src->ch_count));
     if (!error)
         error = soxr_process((soxr_t)c, src->ch, (size_t)src_size,
