@@ -73,7 +73,7 @@ static const AVOption options[]={
 #endif
 {"flags"                , N("set flags")                   , OFFSET(flags          ), AV_OPT_TYPE_FLAGS, {.i64=0                     }, 0      , UINT_MAX  , PARAM, "flags"},
 {"swr_flags"            , N("set flags")                   , OFFSET(flags          ), AV_OPT_TYPE_FLAGS, {.i64=0                     }, 0      , UINT_MAX  , PARAM, "flags"},
-{"res"                  , N("force resampling")            , 0                      , AV_OPT_TYPE_CONST, {.i64=SWR_FLAG_RESAMPLE     }, INT_MIN, INT_MAX   , PARAM, "flags"}, // PAMP change - force 0 flag by default
+{"res"                  , N("force resampling")            , 0                      , AV_OPT_TYPE_CONST, {.i64=0/*SWR_FLAG_RESAMPLE*/     }, INT_MIN, INT_MAX   , PARAM, "flags"}, // PAMP change - force 0 flag by default
 {"dither_scale"         , N("set dither scale")            , OFFSET(dither.scale   ), AV_OPT_TYPE_FLOAT, {.dbl=1                     }, 0      , INT_MAX   , PARAM},
 #if !PAMP_CHANGES
 {"dither_method"        , N("set dither method")           , OFFSET(user_dither_method),AV_OPT_TYPE_INT, {.i64=0                     }, 0      , SWR_DITHER_NB-1, PARAM, "dither_method"},
