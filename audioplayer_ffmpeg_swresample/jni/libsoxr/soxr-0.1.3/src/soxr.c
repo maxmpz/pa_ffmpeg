@@ -370,7 +370,6 @@ soxr_t soxr_create(
 {
   double io_ratio = output_rate!=0? input_rate!=0?
     input_rate / output_rate : -1 : input_rate!=0? -1 : 0;
-  DLOG("%s io_ratio=%f", __func__, io_ratio);
   static const float datatype_full_scale[] = {1, 1, 65536.*32768, 32768};
   soxr_t p = 0;
   soxr_error_t error = 0;
@@ -530,7 +529,6 @@ static soxr_error_t fatal_error(soxr_t p, soxr_error_t error)
 
 static soxr_error_t initialise(soxr_t p)
 {
-  DLOG("%s p=%p", __func__, p);
   unsigned i;
   size_t shared_size, channel_size;
 
@@ -555,6 +553,7 @@ static soxr_error_t initialise(soxr_t p)
     if (error)
       return fatal_error(p, error);
   }
+  DLOG("%s OK flushing=%d p=%p", __func__, p->flushing, p);
   return 0;
 }
 
@@ -580,7 +579,7 @@ soxr_error_t soxr_set_io_ratio(soxr_t p, double io_ratio, size_t slew_len)
   if ((error = p->error)) return error;
   if (!p->num_channels)   return "must set # channels before O/I ratio";
   if (io_ratio <= 0)      return "I/O ratio out-of-range";
-  DLOG("%s p=%p p->channel_ptrs=%p", __func__, p, p->channel_ptrs);
+
   if (!p->channel_ptrs) {
     p->io_ratio = io_ratio;
     return initialise(p);
@@ -602,6 +601,9 @@ void soxr_delete(soxr_t p)
     soxr_delete0(p), free(p);
 }
 
+int soxr_is_flushing(soxr_t p) {
+	return p && p->flushing;
+}
 
 
 soxr_error_t soxr_clear(soxr_t p) /* TODO: this, properly. */
@@ -620,7 +622,7 @@ soxr_error_t soxr_clear(soxr_t p) /* TODO: this, properly. */
     p->deinterleave = tmp.deinterleave;
     p->interleave = tmp.interleave;
 
-    DLOG("%s p=%p p->channel_ptrs=%p", __func__, p, p->channel_ptrs);
+    DLOG("%s flushing=%d p=%p", __func__, p->flushing, p);
 
 #if PAMP_CHANGES // MaxMP: resamples always cleared/freed, but not all code paths will recreate them, so force recreate them now, not just when RESET_ON_CLEAR is set
     return soxr_set_io_ratio(p, tmp.io_ratio, 0);
@@ -636,9 +638,9 @@ soxr_error_t soxr_clear(soxr_t p) /* TODO: this, properly. */
 
 static void soxr_input_1ch(soxr_t p, unsigned i, soxr_cbuf_t src, size_t len)
 {
-  DLOG("%s i=%d p->resamplers=%p", __func__, i, p->resamplers);
+  //DLOG("%s i=%d p->resamplers=%p", __func__, i, p->resamplers);
   sample_t * dest = resampler_input(p->resamplers[i], NULL, len);
-  DLOG("%s i=%d dest=%p len=%zu", __func__, i, dest, len);
+  //DLOG("%s i=%d dest=%p len=%zu", __func__, i, dest, len);
   (*p->deinterleave)(&dest, p->io_spec.itype, &src, len, 1);
 }
 
@@ -736,7 +738,7 @@ size_t soxr_output(soxr_t p, void * out, size_t len0)
     if (!in)
       p->error = "input function reported failure";
     else {
-    	DLOG("%s => soxr_input in=%p idone=%zu", __func__, in, idone);
+    	//DLOG("%s => soxr_input in=%p idone=%zu", __func__, in, idone);
     	soxr_input(p, in, idone);
     }
   } while (odone || idone || (!was_flushing && p->flushing));

@@ -58,16 +58,22 @@ static struct ResampleContext *create(struct ResampleContext *c, int out_rate, i
     q_spec.passband_end = cutoff? FFMAX(FFMIN(cutoff,.995),.8) : q_spec.passband_end;
 #endif
 
+
     soxr_delete((soxr_t)c);
+
     c = (struct ResampleContext *)
         soxr_create(in_rate, out_rate, 0, &error, &io_spec, &q_spec, 0);
+
+    DLOG("%s new soxr=%p", __func__, c);
+
     if (!c)
         av_log(NULL, AV_LOG_ERROR, "soxr_create: %s\n", error);
     return c;
 }
 
 static void destroy(struct ResampleContext * *c){
-    soxr_delete((soxr_t)*c);
+    DLOG("%s soxr=%p", __func__, c);
+	soxr_delete((soxr_t)*c);
     *c = NULL;
 }
 
@@ -85,16 +91,20 @@ static int flush(struct SwrContext *s){
     }
 #else
     // PAMP change: properly flush soxr. NOTE: after flushing, soxr is unable to process further inbound samples as it stays in flushing mode and it will crash
-    // if more in samples feeded into it. soxr_clear properly clears it without complete rebuilding
-    soxr_clear((soxr_t)s->resample);
+    // if more in samples feeded into it. soxr_clear clears it without complete rebuilding, though with issues.
 
-    // NOTE: soxr_clear clears internal soxr resamplers struct and few other components, so soxr is in uninitialized state now. This happens for some quality / SR combinations, not always.
-    // Force it to initialize state (as otherwise, calling flush again will crash us)
+    // NOTE: don't do anything here, handle everything in process
+    // This is due to flush happening before next process, as soxr flushing state should be carefully handled in one point
 
-    soxr_error_t error = soxr_set_error((soxr_t)s->resample, soxr_set_num_channels((soxr_t)s->resample, s->in.ch_count));
-    error = soxr_set_error((soxr_t)s->resample, soxr_set_io_ratio((soxr_t)s->resample, 1.0, 0));
+//    soxr_clear((soxr_t)s->resample);
+//
+//    // NOTE: soxr_clear clears internal soxr resamplers struct and few other components, so soxr is in uninitialized state now. This happens for some quality / SR combinations, not always.
+//    // Force it to initialize state (as otherwise, calling flush again will crash us)
+//
+//    soxr_error_t error = soxr_set_error((soxr_t)s->resample, soxr_set_num_channels((soxr_t)s->resample, s->in.ch_count));
+//    error = soxr_set_error((soxr_t)s->resample, soxr_set_io_ratio((soxr_t)s->resample, 1.0, 0));
 
-    DLOG("%s soxr=%p error=%s", __func__, s->resample, error);
+    DLOG("%s soxr=%p", __func__, s->resample);
 #endif
 
     return 0;
@@ -105,12 +115,31 @@ static int process(
         AudioData *src, int src_size, int *consumed){
     size_t idone, odone;
 
-    DLOG("%s soxr=%p", __func__, c);
-
     soxr_error_t error = soxr_set_error((soxr_t)c, soxr_set_num_channels((soxr_t)c, src->ch_count));
-    if (!error)
-        error = soxr_process((soxr_t)c, src->ch, (size_t)src_size,
-                             &idone, dst->ch, (size_t)dst_size, &odone);
+    if (!error) {
+    	// NOTE: as soon as soxr is set to flush mode, we can't continue with it with any non zero src buffer
+    	// In such case, soxr should be completely reinited
+    	// ? no access to soxr flushing
+    	// ? no access to s->flushed
+
+    	soxr_t p = (soxr_t)c;
+
+    	if(src_size > 0) {
+    		// This is not a flush. If soxr is in flushing state, need to reinitialize it completely
+    		if(soxr_is_flushing(p)) {
+    			DLOG("%s WAS flushing REINIT src_size=%d dst_size=%d", __func__, src_size, dst_size);
+				soxr_clear(p);
+				soxr_error_t error = soxr_set_error(p, soxr_set_num_channels(p, src->ch_count));
+				error = soxr_set_error(p, soxr_set_io_ratio(p, 1.0, 0));
+    		}
+
+    		error = soxr_process((soxr_t)c, src->ch, (size_t)src_size, &idone, dst->ch, (size_t)dst_size, &odone);
+    	} else {
+    		// This is flush request. We need to specifically apply NULL in buffer, just src_size == 0 is not enough
+    		DLOG("%s FLUSH requested src_size=%d dst_size=%d", __func__, src_size, dst_size);
+    		error = soxr_process(p, NULL, 0, &idone, dst->ch, (size_t)dst_size, &odone);
+    	}
+    }
     else
         idone = 0;
 

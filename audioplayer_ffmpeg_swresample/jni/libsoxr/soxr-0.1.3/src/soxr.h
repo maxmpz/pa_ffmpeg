@@ -333,7 +333,8 @@ SOXR soxr_io_spec_t soxr_io_spec(
 SOXR soxr_error_t soxr_set_error(soxr_t, soxr_error_t);
 SOXR soxr_error_t soxr_set_num_channels(soxr_t, unsigned);
 
-
+// MaxMP: provide hint regarding internal flushing state, as once soxr is flusing, it can't accept any more samples and should be completely reset for the new porting of data
+SOXR int soxr_is_flushing(soxr_t soxr);
 
 #undef SOXR
 
