@@ -529,7 +529,6 @@ STATIC void _soxr_process(rate_t * p, size_t olen)
 STATIC real * _soxr_input(rate_t * p, real const * samples, size_t n)
 {
   if (p->flushing) {
-	DLOG("%s flushing", __func__);
     return 0;
   }
   p->samples_in += (int64_t)n;
