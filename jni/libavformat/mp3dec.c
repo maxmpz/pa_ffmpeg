@@ -177,10 +177,11 @@ static void mp3_parse_info_tag(AVFormatContext *s, AVStream *st,
         uint64_t min, delta;
         min = FFMIN(fsize, mp3->header_filesize);
         delta = FFMAX(fsize, mp3->header_filesize) - min;
-        if (fsize > mp3->header_filesize && delta > min >> 4) {
+        if (fsize > mp3->header_filesize && delta > min / 2) { // PAMP chang >> 4 => /2 - increase possible delta needed for used bitrate for dur. REVISIT: this actually should also account for images, which can be any size
             mp3->frames = 0;
             av_log(s, AV_LOG_WARNING,
-                   "invalid concatenated file detected - using bitrate for duration\n");
+                   "invalid concatenated file detected - using bitrate for duration frames=%u\n fsize=%" PRIu64 " header_filesize=%u delta=%" PRIu64 " min=%" PRIu64 " min>>2=%" PRIu64,
+				   mp3->frames, fsize, mp3->header_filesize, delta, min, min / 2);
         } else if (delta > min >> 4) {
             av_log(s, AV_LOG_WARNING,
                    "filesize and duration do not match (growing file?)\n");
