@@ -16,6 +16,7 @@
 		swresample_configuration;
 		#av_log;
 		av_get_profile_name;
+		avcodec_profile_name;
 		#av_malloc;
 		#av_freep;
 		av_dict_get;

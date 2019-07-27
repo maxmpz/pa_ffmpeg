@@ -17,7 +17,5 @@ else
 	endif
 endif
 
-
-
 # Disable cleaning everything in /libs as we need previous/other lib
 NDK_APP.local.cleaned_binaries := true
