@@ -18,7 +18,9 @@ echo Building everything for libffmpeg_neon.so target=$1
 #popd
 #echo
 
-if [ $res -ne 0 ]; then
+res=0
+
+if [ "$res" != 0 ]; then
 	exit $res
 fi
 
@@ -30,7 +32,7 @@ res=$?
 popd
 echo
 
-if [ $res -ne 0 ]; then
+if [ $res != 0 ]; then
 	exit $res
 fi
 
@@ -42,7 +44,7 @@ res=$?
 popd
 echo
 
-if [ $res -ne 0 ]; then
+if [ $res != 0 ]; then
 	exit $res
 fi
 
