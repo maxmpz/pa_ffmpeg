@@ -61,7 +61,7 @@ static const AVOption options[]={
 {"in_channel_layout"    , N("set input channel layout")    , OFFSET(user_in_ch_layout ), AV_OPT_TYPE_CHANNEL_LAYOUT, {.i64=0           }, INT64_MIN, INT64_MAX , PARAM, "channel_layout"},
 {"ocl"                  , N("set output channel layout")   , OFFSET(user_out_ch_layout), AV_OPT_TYPE_CHANNEL_LAYOUT, {.i64=0           }, INT64_MIN, INT64_MAX , PARAM, "channel_layout"},
 {"out_channel_layout"   , N("set output channel layout")   , OFFSET(user_out_ch_layout), AV_OPT_TYPE_CHANNEL_LAYOUT, {.i64=0           }, INT64_MIN, INT64_MAX , PARAM, "channel_layout"},
-#if !PAMP_CHANGES
+// MaxMP: these are needed for proper 6ch mixing
 {"clev"                 , N("set center mix level")        , OFFSET(clev           ), AV_OPT_TYPE_FLOAT, {.dbl=C_30DB                }, -32    , 32        , PARAM},
 {"center_mix_level"     , N("set center mix level")        , OFFSET(clev           ), AV_OPT_TYPE_FLOAT, {.dbl=C_30DB                }, -32    , 32        , PARAM},
 {"slev"                 , N("set surround mix level")      , OFFSET(slev           ), AV_OPT_TYPE_FLOAT, {.dbl=C_30DB                }, -32    , 32        , PARAM},
@@ -70,7 +70,6 @@ static const AVOption options[]={
 {"rmvol"                , N("set rematrix volume")         , OFFSET(rematrix_volume), AV_OPT_TYPE_FLOAT, {.dbl=1.0                   }, -1000  , 1000      , PARAM},
 {"rematrix_volume"      , N("set rematrix volume")         , OFFSET(rematrix_volume), AV_OPT_TYPE_FLOAT, {.dbl=1.0                   }, -1000  , 1000      , PARAM},
 {"rematrix_maxval"      , N("set rematrix maxval" )        , OFFSET(rematrix_maxval), AV_OPT_TYPE_FLOAT, {.dbl=0.0                   }, 0      , 1000      , PARAM},
-#endif
 {"flags"                , N("set flags")                   , OFFSET(flags          ), AV_OPT_TYPE_FLAGS, {.i64=0                     }, 0      , UINT_MAX  , PARAM, "flags"},
 {"swr_flags"            , N("set flags")                   , OFFSET(flags          ), AV_OPT_TYPE_FLAGS, {.i64=0                     }, 0      , UINT_MAX  , PARAM, "flags"},
 {"res"                  , N("force resampling")            , 0                      , AV_OPT_TYPE_CONST, {.i64=0/*SWR_FLAG_RESAMPLE*/     }, INT_MIN, INT_MAX   , PARAM, "flags"}, // PAMP change - force 0 flag by default
