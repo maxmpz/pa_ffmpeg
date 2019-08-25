@@ -63,6 +63,7 @@ LOCAL_C_INCLUDES :=		\
 	$(LOCAL_PATH)/..	\
 	$(FFMPEG_LOCAL_PATH)		\
 	$(FFMPEG_LOCAL_PATH)/.. \
+	$(mbedtls_PATH)/include $(mbedtls_PATH)/crypto/include \
 	
 #	$(LOCAL_PATH)/../../../audioplayer_libopus/opus-1.0.1/include
 

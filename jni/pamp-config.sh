@@ -5,8 +5,8 @@ if [[ $1 ==  'arm64' ]] ; then
 	echo "Config: arm64"
 	echo
 	
-elif [[ $1 == 'neon' ]] ; then
-	echo "Config: neon"
+elif [[ $1 == 'neon-hard' ]] ; then
+	echo "Config: neon-hard"
 	echo
 
 elif [[ $1 == 'x64' ]] ; then
@@ -14,7 +14,7 @@ elif [[ $1 == 'x64' ]] ; then
 	echo
 	
 else 
-    echo "Usage: pamp-config.sh neon|arm64|x64"
+    echo "Usage: pamp-config.sh neon-hard|arm64|x64"
     echo
     exit 1
 fi
@@ -22,6 +22,7 @@ fi
 FFMPEG_PATH=../FFmpeg
 NDK_PATH=/opt/android-ndk-r11c
 GCC_VER=4.9
+LOCAL_PATH=$PWD
 
 if [[ $1 ==  'arm64' ]] ; then
 	FFMPEG_ARCH=aarch64
@@ -34,10 +35,13 @@ if [[ $1 ==  'arm64' ]] ; then
 		-Wl,--no-whole-archive $PREBUILT/lib/gcc/aarch64-linux-android/$GCC_VER/libgcc.a \
 		-Wl,--no-undefined -Wl,-z,noexecstack -L$PLATFORM/usr/lib \
 		-llog -lz -lc \
-		-Wl,--no-warn-mismatch -lm"
+		-Wl,--no-warn-mismatch -lm \
+		-L$LOCAL_PATH/../../mbedtls/crypto/build/arm64-v8a \
+		-L$LOCAL_PATH/../../mbedtls/build/arm64-v8a \
+		"
 	TARGET_CONFIG_FILENAME=config-arm64	
 	
-elif [[ $1 == 'neon' ]] ; then
+elif [[ $1 == 'neon-hard' ]] ; then
 	FFMPEG_ARCH=arm
 	PLATFORM=$NDK_PATH/platforms/android-21/arch-arm
 	EABI=arm-linux-androideabi-4.9
@@ -55,7 +59,10 @@ elif [[ $1 == 'neon' ]] ; then
 		-Wl,--no-whole-archive $PREBUILT/lib/gcc/arm-linux-androideabi/$GCC_VER/libgcc.a \
 		-Wl,--no-undefined -Wl,-z,noexecstack -L$PLATFORM/usr/lib \
 		-llog -lz -lc \
-		-Wl,--no-warn-mismatch -lm_hard"
+		-Wl,--no-warn-mismatch -lm_hard \
+		-L$LOCAL_PATH/../../mbedtls/crypto/build/armeabi-v7a \
+        -L$LOCAL_PATH/../../mbedtls/build/armeabi-v7a \
+        "
 	TARGET_CONFIG_FILENAME=config-neon
 	
 elif [[ $1 == 'x64' ]] ; then
@@ -69,7 +76,10 @@ elif [[ $1 == 'x64' ]] ; then
 		-Wl,--no-whole-archive $PREBUILT/lib/gcc/aarch64-linux-android/$GCC_VER/libgcc.a \
 		-Wl,--no-undefined -Wl,-z,noexecstack -L$PLATFORM/usr/lib \
 		-llog -lz -lc \
-		-Wl,--no-warn-mismatch -lm"
+		-Wl,--no-warn-mismatch -lm \
+		"
+# TODO: mbedtls x86_64 out build dirs
+		
 	TARGET_CONFIG_FILENAME=config-arm64	
 	
 fi
@@ -80,7 +90,8 @@ NEON_CONFIG=" \
 	--extra-cflags=\"-DANDROID --sysroot=$PLATFORM \
 		$ARM_FF_FLAGS \
 		-MMD -MP -fstrict-aliasing -Werror=strict-aliasing -ffunction-sections -funwind-tables -fstack-protector -Wno-psabi -fomit-frame-pointer \
-		-std=c99 -Wno-sign-compare -Wno-switch -Wno-pointer-sign -ffast-math -Wa,--noexecstack -I$PLATFORM/usr/include \""
+		-std=c99 -Wno-sign-compare -Wno-switch -Wno-pointer-sign -ffast-math -Wa,--noexecstack -I$PLATFORM/usr/include \
+		-I$LOCAL_PATH/../../mbedtls/include -I$LOCAL_PATH/../../mbedtls/crypto/include\""
 
 #--enable-demuxer=wv \
 #--enable-decoder=mp3 \
@@ -96,6 +107,10 @@ NEON_CONFIG=" \
 #--enable-demuxer=amr \
 #--enable-shared \
 #--disable-fast-unaligned \
+#--enable-protocol=crypto \
+#--enable-protocol=tcp \
+#--enable-protocol=udp \
+#--enable-protocol=tls \
 
 # NEW: 
 
@@ -131,8 +146,12 @@ $FFMPEG_PATH/configure --target-os=linux \
 \
 --enable-protocol=file \
 --enable-protocol=pipe \
+\
+--enable-version3 \
+--enable-mbedtls \
+--enable-network \
 --enable-protocol=http \
---enable-protocol=rtp \
+--enable-protocol=https \
 \
 --enable-decoder=aac \
 --enable-decoder=mp3float \

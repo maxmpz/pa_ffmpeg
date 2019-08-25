@@ -39,6 +39,7 @@ LOCAL_C_INCLUDES :=		\
 	$(LOCAL_PATH)/..	\
 	$(FFMPEG_LOCAL_PATH)		\
 	$(FFMPEG_LOCAL_PATH)/.. \
+	$(mbedtls_PATH)/include $(mbedtls_PATH)/crypto/include \
 	
 	
 LOCAL_CFLAGS += $(PA_GLOBAL_CFLAGS)

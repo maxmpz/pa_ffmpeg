@@ -8,13 +8,11 @@ LOCAL_OBJS_TO_REMOVE := \
        xga_font_data.o                                                  \
        xtea.o                                                           \
        tree.o                                                           \
-		aes.o                                                            \
        blowfish.o                                                       \
        lls.o                                                            \
 		cast5.o \
 		ripemd.o \
 		hash.o \
-		parseutils.o \
 		camellia.o \
 		twofish.o \
 		murmur3.o \
@@ -22,12 +20,14 @@ LOCAL_OBJS_TO_REMOVE := \
 		pixelutils.o \
 		color_utils.o \
 		adler32.o \
-		aes_ctr.o \
 		
-#		fixed_dsp.o \
+#		aes.o                                                            \
+		aes_ctr.o \
+		fixed_dsp.o \
 		imgutils.o                                                       \
        pixdesc.o                                                        \
        lzo.o                                                            \
+		parseutils.o \
 		
 
 #LOCAL_USE_LOCAL_MAKEFILE := yes

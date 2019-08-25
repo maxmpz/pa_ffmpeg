@@ -12,6 +12,8 @@ USE_VERSION := #yes # Enables build.version based versioning. Ffmpeg requires th
 
 FFMPEG_ROOT := ../FFmpeg
 FFMPEG_OVERRIDE_ROOT := $(LOCAL_PATH) # This dir, basically
+mbedtls_PATH := $(abspath $(LOCAL_PATH)/../../mbedtls)
+
 
 include $(LOCAL_PATH)/config-pamp.mak
 
@@ -141,6 +143,25 @@ LOCAL_SRC_FILES := $(abspath $(LOCAL_PATH)/../audioplayer_ffmpeg_swresample/obj/
 
 include $(PREBUILT_STATIC_LIBRARY)
 
+# REVISIT: this can build vs wrong architecture
+
+# ============================================ Link mbedcrypto
+include $(CLEAR_VARS)
+LOCAL_MODULE := libmbedcrypto-prebuilt
+LOCAL_SRC_FILES := $(mbedtls_PATH)/crypto/build/$(PA_GLOBAL_TARGET_ARCH_NAME)/libmbedcrypto.a
+include $(PREBUILT_STATIC_LIBRARY)
+# ============================================ Link mbedx509
+include $(CLEAR_VARS)
+LOCAL_MODULE := libmbedx509-prebuilt
+LOCAL_SRC_FILES :=  $(mbedtls_PATH)/build/$(PA_GLOBAL_TARGET_ARCH_NAME)/libmbedx509.a
+include $(PREBUILT_STATIC_LIBRARY)
+# ============================================ Link mbedtls
+include $(CLEAR_VARS)
+LOCAL_MODULE := libmbedtls-prebuilt
+LOCAL_SRC_FILES :=  $(mbedtls_PATH)/build/$(PA_GLOBAL_TARGET_ARCH_NAME)/libmbedtls.a
+include $(PREBUILT_STATIC_LIBRARY)
+
+
 # ============================================== 
 
 include $(CLEAR_VARS)
@@ -148,9 +169,7 @@ LOCAL_ARM_MODE := arm
  
 LOCAL_LDLIBS += -llog -lz 
 
-#LOCAL_STATIC_LIBRARIES := libavformat libavcodec libavutil libswresample #libjni #libopus # libtta libopencore_amr
-
-LOCAL_WHOLE_STATIC_LIBRARIES := libavformat libavutil libsoxr-prebuilt libswresample libavcodec #libswresample-prebuilt #libtta #libjni
+LOCAL_WHOLE_STATIC_LIBRARIES := libavformat libavutil libsoxr-prebuilt libmbedcrypto-prebuilt libmbedx509-prebuilt libmbedtls-prebuilt libswresample libavcodec #libswresample-prebuilt #libtta #libjni
 
 ifeq ($(USE_VERSION),yes)
 LOCAL_MODULE := libffmpeg_neon.$(build.number)
@@ -172,7 +191,7 @@ LOCAL_LDFLAGS := $(PA_GLOBAL_LDFLAGS) -Wl,--discard-all -Wl,--gc-sections -Wl,--
 
 
 ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
-	LOCAL_LDFLAGS += $(PA_GLOBAL_LDFLAGS) -lm
+	LOCAL_LDFLAGS += $(PA_GLOBAL_LDFLAGS) -lm 
 	LOCAL_LDLIBS += -lm 
 else ifeq ($(TARGET_ARCH_ABI),armeabi-v7a-hard) # HARD
 	LOCAL_LDFLAGS += $(PA_GLOBAL_LDFLAGS) -Wl,--no-warn-mismatch -lm_hard

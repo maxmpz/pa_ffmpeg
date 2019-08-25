@@ -10,6 +10,15 @@ CMD=./build-$1.sh
 
 echo Building everything for libffmpeg_neon.so target=$1
 
+pushd ../mbedtls
+$CMD
+res=$?
+popd
+echo
+if [ $res != 0 ]; then
+	exit $res
+fi
+
 # NOTE: not necessary to run each time as once configured, all targets keep same files around
 #pushd jni
 #echo Configuring
