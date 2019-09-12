@@ -62,9 +62,7 @@ static const AVClass *ff_avio_child_class_next(const AVClass *prev)
 #define E AV_OPT_FLAG_ENCODING_PARAM
 #define D AV_OPT_FLAG_DECODING_PARAM
 static const AVOption ff_avio_options[] = {
-#if !PAMP_CHANGES
-    {"protocol_whitelist", "List of protocols that are allowed to be used", OFFSET(protocol_whitelist), AV_OPT_TYPE_STRING, { .str = NULL },  CHAR_MIN, CHAR_MAX, D },
-#endif
+    {"protocol_whitelist", NULL_IF_CONFIG_SMALL("List of protocols that are allowed to be used"), OFFSET(protocol_whitelist), AV_OPT_TYPE_STRING, { .str = NULL },  CHAR_MIN, CHAR_MAX, D },
     { NULL },
 };
 

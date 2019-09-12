@@ -130,9 +130,9 @@ static const AVOption avformat_options[] = {
 #if !PAMP_CHANGES
 {"codec_whitelist", N("List of decoders that are allowed to be used"), OFFSET(codec_whitelist), AV_OPT_TYPE_STRING, { .str = NULL },  CHAR_MIN, CHAR_MAX, D },
 {"format_whitelist", N("List of demuxers that are allowed to be used"), OFFSET(format_whitelist), AV_OPT_TYPE_STRING, { .str = NULL },  CHAR_MIN, CHAR_MAX, D },
+#endif
 {"protocol_whitelist", N("List of protocols that are allowed to be used"), OFFSET(protocol_whitelist), AV_OPT_TYPE_STRING, { .str = NULL },  CHAR_MIN, CHAR_MAX, D },
 {"protocol_blacklist", N("List of protocols that are not allowed to be used"), OFFSET(protocol_blacklist), AV_OPT_TYPE_STRING, { .str = NULL },  CHAR_MIN, CHAR_MAX, D },
-#endif
 {"max_streams", N("maximum number of streams"), OFFSET(max_streams), AV_OPT_TYPE_INT, { .i64 = 1000 }, 0, INT_MAX, D },
 #if !PAMP_CHANGES
 {"skip_estimate_duration_from_pts", N("skip duration calculation in estimate_timings_from_pts"), OFFSET(skip_estimate_duration_from_pts), AV_OPT_TYPE_BOOL, {.i64 = 0}, 0, 1, D},

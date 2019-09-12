@@ -126,6 +126,7 @@ $FFMPEG_PATH/configure --target-os=linux \
 --extra-ldflags=\"$LDFLAGS\" \
 --enable-small \
 --enable-pic \
+--enable-zlib \
 \
 --disable-autodetect \
 --disable-runtime-cpudetect \
