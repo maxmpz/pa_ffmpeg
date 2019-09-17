@@ -16,6 +16,9 @@
 		swresample_configuration;
 		av_get_profile_name;
 		avcodec_profile_name;
+		av_dict_set_int;
+		av_dict_count;
+		av_opt_find2;
 		av_dict_get;
 		av_dict_set;
 		av_dict_free;
