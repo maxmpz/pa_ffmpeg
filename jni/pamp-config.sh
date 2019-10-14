@@ -175,6 +175,7 @@ $FFMPEG_PATH/configure --target-os=linux \
 --enable-decoder=als \
 --enable-decoder=mlp \
 --enable-decoder=truehd \
+--enable-decoder=dca \
 \
 --enable-parser=opus \
 --enable-parser=flac \
@@ -205,6 +206,9 @@ $FFMPEG_PATH/configure --target-os=linux \
 --enable-parser=mpegaudio \
 --enable-parser=gsm \
 --enable-parser=mlp \
+--enable-demuxer=dts \
+--enable-demuxer=dtshd \
+--enable-parser=dca \
 \
 --enable-decoder=pcm_s8 \
 --enable-decoder=pcm_s8_planar \
