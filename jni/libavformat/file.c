@@ -415,7 +415,11 @@ const URLProtocol ff_pipe_protocol = {
     .url_check           = file_check,
     .priv_data_size      = sizeof(FileContext),
     .priv_data_class     = &pipe_class,
-    .default_whitelist   = "crypto"
+#if PAMP_CHANGES // PAMP change: allow all protocols here
+    .default_whitelist   = NULL
+#else
+	.default_whitelist   = "file"
+#endif
 };
 
 #endif /* CONFIG_PIPE_PROTOCOL */
