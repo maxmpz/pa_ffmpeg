@@ -18,6 +18,7 @@
 		avcodec_profile_name;
 		av_dict_set_int;
 		av_dict_count;
+		av_dict_get_string;
 		av_opt_find2;
 		av_dict_get;
 		av_dict_set;
@@ -49,6 +50,7 @@
 		av_stristr;
 		avio_size;
 		av_lockmgr_register;
+		av_match_ext;
 
 		swri_oldapi_conv_flt_to_s16_neon;
 		swr_alloc;		

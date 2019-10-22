@@ -369,7 +369,11 @@ const URLProtocol ff_file_protocol = {
     .url_open_dir        = file_open_dir,
     .url_read_dir        = file_read_dir,
     .url_close_dir       = file_close_dir,
+#if PAMP_CHANGES // PAMP change: allow all protocols here
+    .default_whitelist   = NULL
+#else
     .default_whitelist   = "file,crypto"
+#endif
 };
 
 #endif /* CONFIG_FILE_PROTOCOL */
