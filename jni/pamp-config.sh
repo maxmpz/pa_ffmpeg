@@ -147,12 +147,14 @@ $FFMPEG_PATH/configure --target-os=linux \
 \
 --enable-protocol=file \
 --enable-protocol=pipe \
+--enable-protocol=data \
 \
 --enable-version3 \
 --enable-mbedtls \
 --enable-network \
 --enable-protocol=http \
 --enable-protocol=https \
+--enable-protocol=hls \
 \
 --enable-decoder=aac \
 --enable-decoder=mp3float \
@@ -189,6 +191,7 @@ $FFMPEG_PATH/configure --target-os=linux \
 --enable-demuxer=matroska \
 --enable-demuxer=mpegts \
 --enable-demuxer=mpegtsraw \
+--enable-demuxer=hls \
 \
 --enable-demuxer=wav \
 --enable-demuxer=flv \

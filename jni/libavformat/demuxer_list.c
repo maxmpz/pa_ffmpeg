@@ -13,6 +13,7 @@ static const AVInputFormat * const demuxer_list[] = {
     &ff_g723_1_demuxer,
     &ff_g729_demuxer,
     &ff_gsm_demuxer,
+    &ff_hls_demuxer,
     &ff_iff_demuxer,
     &ff_matroska_demuxer,
     &ff_mov_demuxer,
