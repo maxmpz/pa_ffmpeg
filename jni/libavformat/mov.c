@@ -1,6 +1,6 @@
 //#pragma GCC optimize ("O3")
 
-// Disable Aax support/DRMs
+// Pamp change: disable Aax support/DRMs
 
 #define AVUTIL_AES_H
 #define AVUTIL_SHA_H
@@ -84,6 +84,11 @@
 #include "mov_chan.h"
 #include "replaygain.h"
 
+#if PAMP_CONFIG_NO_TAGS
+#include "libavformat/avformat_pamp.h"
+#endif
+
+
 #if CONFIG_ZLIB
 #include <zlib.h>
 #endif
@@ -155,9 +160,11 @@ static int mov_metadata_gnre(MOVContext *c, AVIOContext *pb,
     genre = avio_r8(pb);
     if (genre < 1 || genre > ID3v1_GENRE_MAX)
         return 0;
+
+#if !PAMP_CONFIG_NO_TAGS // Pamp change: ignore genre
     c->fc->event_flags |= AVFMT_EVENT_FLAG_METADATA_UPDATED;
     av_dict_set(&c->fc->metadata, key, ff_id3v1_genre_str[genre-1], 0);
-
+#endif
     return 0;
 }
 
@@ -4437,13 +4444,14 @@ static int mov_read_custom(MOVContext *c, AVIOContext *pb, MOVAtom atom)
 #endif
         }
 
-#if !PAMP_CONFIG_NO_TAGS
+#if PAMP_CONFIG_NO_TAGS
+        if(!(c->fc->flags & PAMP_AVFMT_FLAG_SKIP_TAGS)) // Pamp change: continue with metadata only if we don't have PAMP_AVFMT_FLAG_SKIP_TAGS
+#endif
         if (strcmp(key, "cdec") != 0) {
             av_dict_set(&c->fc->metadata, key, val,
                         AV_DICT_DONT_STRDUP_KEY | AV_DICT_DONT_STRDUP_VAL);
             key = val = NULL;
         }
-#endif
     } else {
         av_log(c->fc, AV_LOG_VERBOSE,
                "Unhandled or malformed custom metadata of size %"PRId64"\n", atom.size);
@@ -6890,12 +6898,14 @@ static int mov_read_default(MOVContext *c, AVIOContext *pb, MOVAtom atom)
                 break;
             }
 
-#if !PAMP_CONFIG_NO_TAGS
+#if PAMP_CONFIG_NO_TAGS
+        if(!(c->fc->flags & PAMP_AVFMT_FLAG_SKIP_TAGS)) // Pamp change: continue with metadata only if we do't have PAMP_AVFMT_FLAG_SKIP_TAGS
+#endif
         // container is user data
         if (!parse && (atom.type == MKTAG('u','d','t','a') ||
                        atom.type == MKTAG('i','l','s','t')))
             parse = mov_read_udta_string;
-#endif
+
         // Supports parsing the QuickTime Metadata Keys.
         // https://developer.apple.com/library/mac/documentation/QuickTime/QTFF/Metadata/Metadata.html
         if (!parse && c->found_hdlr_mdta &&
@@ -7570,7 +7580,7 @@ static int mov_read_header(AVFormatContext *s)
 
         switch (st->codecpar->codec_type) {
         case AVMEDIA_TYPE_AUDIO:
-#if !PAMP_CONFIG_NO_TAGS
+#if !PAMP_CONFIG_NO_TAGS // Pamp change: ignore rg here
             err = ff_replaygain_export(st, s->metadata);
             if (err < 0) {
                 mov_read_close(s);
