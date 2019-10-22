@@ -4441,8 +4441,10 @@ static int mov_read_custom(MOVContext *c, AVIOContext *pb, MOVAtom atom)
             av_log(NULL, AV_LOG_INFO, "mov meta=%s %s", key, val);
             av_dict_set(&c->fc->metadata, key, val, AV_DICT_DONT_STRDUP_VAL | AV_DICT_MATCH_CASE | AV_DICT_DONT_STRDUP_KEY);
             key = val = NULL;
-#endif
+        } else // NOTE: continue: else if(!(c->fc->flags & PAMP_AVFMT_FLAG_SKIP_TAGS))
+#else
         }
+#endif
 
 #if PAMP_CONFIG_NO_TAGS
         if(!(c->fc->flags & PAMP_AVFMT_FLAG_SKIP_TAGS)) // Pamp change: continue with metadata only if we don't have PAMP_AVFMT_FLAG_SKIP_TAGS
