@@ -39,6 +39,12 @@
 #include "vorbiscomment.h"
 #include "replaygain.h"
 
+#include <android/log.h>
+#define LOG_TAG "oggparsevorbis.c"
+#define DLOG(...) //__android_log_print(ANDROID_LOG_WARN,LOG_TAG,__VA_ARGS__)
+#define __FUNC__ __FUNCTION__
+
+
 static int ogm_chapter(AVFormatContext *as, uint8_t *key, uint8_t *val)
 {
     int i, cnum, h, m, s, ms, keylen = strlen(key);
