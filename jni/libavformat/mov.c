@@ -211,6 +211,11 @@ static int mov_read_mac_string(MOVContext *c, AVIOContext *pb, int len,
 
 static int mov_read_covr(MOVContext *c, AVIOContext *pb, int type, int len)
 {
+#if PAMP_CONFIG_NO_TAGS
+     avio_skip(pb, len);
+     return 0;
+#endif
+
     AVPacket pkt;
     AVStream *st;
     MOVStreamContext *sc;
@@ -7065,6 +7070,7 @@ static void mov_read_chapters(AVFormatContext *s)
         cur_pos = avio_tell(sc->pb);
 
         if (st->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
+#if !PAMP_CONFIG_NO_TAGS
             st->disposition |= AV_DISPOSITION_ATTACHED_PIC | AV_DISPOSITION_TIMED_THUMBNAILS;
             if (st->nb_index_entries) {
                 // Retrieve the first frame, if possible
@@ -7082,6 +7088,7 @@ static void mov_read_chapters(AVFormatContext *s)
                 st->attached_pic.stream_index = st->index;
                 st->attached_pic.flags       |= AV_PKT_FLAG_KEY;
             }
+#endif
         } else {
             st->codecpar->codec_type = AVMEDIA_TYPE_DATA;
             st->codecpar->codec_id = AV_CODEC_ID_BIN_DATA;
