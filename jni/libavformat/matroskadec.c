@@ -2694,6 +2694,7 @@ static int matroska_read_header(AVFormatContext *s)
     if (res < 0)
         goto fail;
 
+#if PAMP_CONFIG_NO_TAGS
     attachments = attachments_list->elem;
     for (j = 0; j < attachments_list->nb_elem; j++) {
         if (!(attachments[j].filename && attachments[j].mime &&
@@ -2744,6 +2745,7 @@ static int matroska_read_header(AVFormatContext *s)
             }
         }
     }
+#endif
 
     chapters = chapters_list->elem;
     for (i = 0; i < chapters_list->nb_elem; i++)
