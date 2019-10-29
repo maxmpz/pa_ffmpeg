@@ -39,6 +39,10 @@
 #include "vorbiscomment.h"
 #include "replaygain.h"
 
+#if PAMP_CONFIG_NO_TAGS
+#include "libavformat/avformat_pamp.h"
+#endif
+
 #include <android/log.h>
 #define LOG_TAG "oggparsevorbis.c"
 #define DLOG(...) //__android_log_print(ANDROID_LOG_WARN,LOG_TAG,__VA_ARGS__)
@@ -186,8 +190,8 @@ int ff_vorbis_comment(AVFormatContext *as, AVDictionary **m,
 
             } else if (!ogm_chapter(as, tt, ct)) {
                 updates++;
-#if PAMP_CONFIG_NO_TAGS // Begin PAMP change - skip everything unrelated to replaygain
-                if(strncasecmp(tt, "replaygain_", 11) == 0 || strncasecmp(tt, "R128_TRACK_GAIN", 15) == 0) {
+#if PAMP_CONFIG_NO_TAGS // Begin PAMP change - skip everything unrelated to replaygain if PAMP_AVFMT_FLAG_SKIP_TAGS is set
+                if(!(as->flags & PAMP_AVFMT_FLAG_SKIP_TAGS) || (strncasecmp(tt, "replaygain_", 11) == 0 || strncasecmp(tt, "R128_TRACK_GAIN", 15) == 0)) {
 #endif // End PAMP change
                 if (av_dict_get(*m, tt, NULL, 0)) {
                     av_dict_set(m, tt, ";", AV_DICT_APPEND);
@@ -211,9 +215,10 @@ int ff_vorbis_comment(AVFormatContext *as, AVDictionary **m,
     if (n > 0)
         av_log(as, AV_LOG_INFO,
                "truncated comment header, %i comments not found\n", n);
-#if !PAMP_CONFIG_NO_TAGS
-    ff_metadata_conv(m, NULL, ff_vorbiscomment_metadata_conv);
+#if PAMP_CONFIG_NO_TAGS // PAMP change - skip everything unrelated to replaygain if PAMP_AVFMT_FLAG_SKIP_TAGS is set
+    if(!(as->flags & PAMP_AVFMT_FLAG_SKIP_TAGS))
 #endif
+    ff_metadata_conv(m, NULL, ff_vorbiscomment_metadata_conv);
     return updates;
 }
 
