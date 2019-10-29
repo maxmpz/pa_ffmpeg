@@ -106,7 +106,6 @@ typedef struct HTTPContext {
     uint64_t icy_metaint;
     char *icy_metadata_headers;
     char *icy_metadata_packet;
-    uint64_t icy_packets; // Pamp change
     AVDictionary *metadata;
 #if CONFIG_ZLIB
     int compressed;
@@ -137,7 +136,6 @@ typedef struct HTTPContext {
 #define N(s) NULL_IF_CONFIG_SMALL(s) // Pamp change
 
 static const AVOption options[] = {
-    { "icy_packets", N("number of ICY packets received"), OFFSET(icy_packets), AV_OPT_TYPE_UINT64, { .i64 = 0 }, 0, 0, D | AV_OPT_FLAG_EXPORT }, // Pamp change. NOTE: on top as it's frequently checked
     { "seekable", N("control seekability of connection"), OFFSET(seekable), AV_OPT_TYPE_BOOL, { .i64 = -1 }, -1, 1, D },
     { "chunked_post", N("use chunked transfer-encoding for posts"), OFFSET(chunked_post), AV_OPT_TYPE_BOOL, { .i64 = 1 }, 0, 1, E },
     { "http_proxy", N("set HTTP proxy to tunnel through"), OFFSET(http_proxy), AV_OPT_TYPE_STRING, { .str = NULL }, 0, 0, D | E },
@@ -1572,7 +1570,6 @@ static int store_icy(URLContext *h, int size)
             if ((ret = av_opt_set(s, "icy_metadata_packet", data, 0)) < 0)
                 return ret;
             update_metadata(h, data);
-            s->icy_packets++; // Pamp change
         }
         s->icy_data_read = 0;
         remaining        = s->icy_metaint;
