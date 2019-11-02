@@ -1,4 +1,4 @@
-#if !PAMP_CHANGES
+#if !PAMP_CONFIG_NO_TAGS
 #include "../FFmpeg/libavformat/id3v1.c"
 #else
 
