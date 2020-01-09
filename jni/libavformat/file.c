@@ -399,7 +399,7 @@ static int pipe_open(URLContext *h, const char *filename, int flags)
     setmode(fd, O_BINARY);
 #endif
     c->fd = fd;
-#if PAMP_CHANGES // PAMP change: allow seeks for pipe protocol
+#if PAMP_CHANGES // PAMP change: allow seeks for pipe protocol. REVISIT: check for actual pipe?
     h->is_streamed = 0;
 #else
     h->is_streamed = 1;

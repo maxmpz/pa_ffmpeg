@@ -1826,7 +1826,7 @@ FF_ENABLE_DEPRECATION_WARNINGS
     case AVMEDIA_TYPE_VIDEO:
 // Begin PAMP change
 #if PAMP_CONFIG_NO_VIDEO
-    av_assert0(0);
+    // Do nothing here. From logs we're getting here somehow
 #else
         frame->format              = avctx->pix_fmt;
         if (!frame->sample_aspect_ratio.num)
