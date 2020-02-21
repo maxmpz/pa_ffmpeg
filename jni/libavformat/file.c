@@ -38,6 +38,11 @@
 #include "os_support.h"
 #include "url.h"
 
+#include <android/log.h>
+#define LOG_TAG "file.c"
+#define __FUNC__ __FUNCTION__
+#define DLOG(...) __android_log_print(ANDROID_LOG_WARN,LOG_TAG,__VA_ARGS__)
+
 /* Some systems may not have S_ISFIFO */
 #ifndef S_ISFIFO
 #  ifdef S_IFIFO
@@ -399,8 +404,10 @@ static int pipe_open(URLContext *h, const char *filename, int flags)
     setmode(fd, O_BINARY);
 #endif
     c->fd = fd;
-#if PAMP_CHANGES // PAMP change: allow seeks for pipe protocol. REVISIT: check for actual pipe?
-    h->is_streamed = 0;
+#if PAMP_CHANGES // PAMP change: allow seeksable property for pipe protocol. REVISIT: check for actual pipe?
+    if (c->seekable >= 0)
+        h->is_streamed = !c->seekable;
+    DLOG("%s is_streamed=%d seekable=%d", __FUNC__, h->is_streamed, c->seekable);
 #else
     h->is_streamed = 1;
 #endif

@@ -7,7 +7,6 @@ include $(CLEAR_VARS)
 LOCAL_OBJS_TO_REMOVE := \
        xga_font_data.o                                                  \
        xtea.o                                                           \
-       tree.o                                                           \
        blowfish.o                                                       \
        lls.o                                                            \
 		cast5.o \
@@ -28,6 +27,7 @@ LOCAL_OBJS_TO_REMOVE := \
        pixdesc.o                                                        \
        lzo.o                                                            \
 		parseutils.o \
+       tree.o                                                           \
 		
 
 #LOCAL_USE_LOCAL_MAKEFILE := yes

@@ -12,8 +12,8 @@ if [ $res -ne 0 ]; then
 fi
 
 pushd jni
-echo Configuring neon
-./pamp-config.sh neon
+echo Configuring neon-hard
+./pamp-config.sh neon-hard
 res=$?
 popd
 echo

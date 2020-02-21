@@ -148,6 +148,7 @@ $FFMPEG_PATH/configure --target-os=linux \
 --enable-protocol=file \
 --enable-protocol=pipe \
 --enable-protocol=data \
+--enable-protocol=cache \
 \
 --enable-version3 \
 --enable-mbedtls \
@@ -307,7 +308,11 @@ $FFMPEG_PATH/configure --target-os=linux \
 --enable-demuxer=g723_1 \
 --enable-demuxer=g729 \
 \
+--env='async_protocol_deps=\"\"'\
 "
+
+#--enable-protocol=async \ # NOTE: doesn't work with hack for neon-hard (requires some work with pthreads inclusion)
+# --env='async_protocol_deps=\"\"'\ hack, forcing async without threads dependency (which it doesn't actually require)
 
 #--enable-decoder=mace3 \
 #--enable-decoder=mace6 \

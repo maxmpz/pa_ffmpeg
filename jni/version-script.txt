@@ -51,6 +51,9 @@
 		avio_size;
 		av_lockmgr_register;
 		av_match_ext;
+		avio_alloc_context;
+		avio_context_free;
+		av_default_item_name;
 
 		swri_oldapi_conv_flt_to_s16_neon;
 		swr_alloc;		
@@ -69,7 +72,9 @@
 		av_base64_encode;
 		av_lfg_init;
 		
+		av_malloc;
 		av_free;
+		av_freep;
 		av_sha_alloc;
 		av_sha_init;
 		av_sha_update;
