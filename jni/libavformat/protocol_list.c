@@ -1,5 +1,4 @@
 static const URLProtocol * const url_protocols[] = {
-    &ff_cache_protocol,
     &ff_data_protocol,
     &ff_file_protocol,
     &ff_hls_protocol,
