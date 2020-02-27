@@ -41,7 +41,7 @@
 #include <android/log.h>
 #define LOG_TAG "file.c"
 #define __FUNC__ __FUNCTION__
-#define DLOG(...) __android_log_print(ANDROID_LOG_WARN,LOG_TAG,__VA_ARGS__)
+#define DLOG(...) //__android_log_print(ANDROID_LOG_WARN,LOG_TAG,__VA_ARGS__)
 
 /* Some systems may not have S_ISFIFO */
 #ifndef S_ISFIFO

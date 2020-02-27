@@ -71,7 +71,6 @@ static int flac_read_header(AVFormatContext *s)
     /* process metadata blocks */
     while (!avio_feof(s->pb) && !metadata_last) {
         if (avio_read(s->pb, header, 4) != 4) {
-        	DLOG("%s FAIL", __FUNC__);
             return AVERROR(AVERROR_INVALIDDATA);
         }
         flac_parse_block_header(header, &metadata_last, &metadata_type,
@@ -142,13 +141,11 @@ static int flac_read_header(AVFormatContext *s)
 
             /* STREAMINFO can only occur once */
             if (found_streaminfo) {
-            	DLOG("%s FAIL", __FUNC__);
 #if !PAMP_CHANGES // PAMP change: don't do anything - there are files like that in the wild (815-flac-not-played)
                 RETURN_ERROR(AVERROR_INVALIDDATA);
 #endif
             }
             if (metadata_size != FLAC_STREAMINFO_SIZE) {
-            	DLOG("%s FAIL 2", __FUNC__);
                 RETURN_ERROR(AVERROR_INVALIDDATA);
             }
             found_streaminfo = 1;
@@ -173,18 +170,15 @@ static int flac_read_header(AVFormatContext *s)
             const uint8_t *offset;
             int i, chapters, track, ti;
             if (metadata_size < 431) {
-            	DLOG("%s FAIL 3", __FUNC__);
                 RETURN_ERROR(AVERROR_INVALIDDATA);
             }
             offset = buffer + 395;
             chapters = bytestream_get_byte(&offset) - 1;
             if (chapters <= 0) {
-            	DLOG("%s FAIL 4", __FUNC__);
                 RETURN_ERROR(AVERROR_INVALIDDATA);
             }
             for (i = 0; i < chapters; i++) {
                 if (offset + 36 - buffer > metadata_size) {
-                	DLOG("%s FAIL 5", __FUNC__);
                     RETURN_ERROR(AVERROR_INVALIDDATA);
                 }
                 start = bytestream_get_be64(&offset);
@@ -194,7 +188,6 @@ static int flac_read_header(AVFormatContext *s)
                 offset += 14;
                 ti = bytestream_get_byte(&offset);
                 if (ti <= 0) {
-                	DLOG("%s FAIL 6", __FUNC__);
                 	RETURN_ERROR(AVERROR_INVALIDDATA);
                 }
                 offset += ti * 12;
@@ -216,6 +209,7 @@ static int flac_read_header(AVFormatContext *s)
         } else if (metadata_type == FLAC_METADATA_TYPE_SEEKTABLE) {
             const uint8_t *seekpoint = buffer;
             int i, seek_point_count = metadata_size/SEEKPOINT_SIZE;
+            DLOG("%s FLAC_METADATA_TYPE_SEEKTABLE", __FUNC__);
             flac->found_seektable = 1;
             if ((s->flags&AVFMT_FLAG_FAST_SEEK)) {
                 for(i=0; i<seek_point_count; i++) {
@@ -232,7 +226,6 @@ static int flac_read_header(AVFormatContext *s)
 
             /* STREAMINFO must be the first block */
             if (!found_streaminfo) {
-            	DLOG("%s FAIL 7", __FUNC__);
                 RETURN_ERROR(AVERROR_INVALIDDATA);
             }
             /* process supported blocks other than STREAMINFO */
@@ -329,6 +322,7 @@ static av_unused int64_t flac_read_timestamp(AVFormatContext *s, int stream_inde
     int ret;
     int64_t pts = AV_NOPTS_VALUE;
 
+    DLOG("%s seek pos=%" PRId64, __FUNC__, *ppos);
     if (avio_seek(s->pb, *ppos, SEEK_SET) < 0)
         return AV_NOPTS_VALUE;
 
@@ -378,14 +372,18 @@ static int flac_seek(AVFormatContext *s, int stream_index, int64_t timestamp, in
     FLACDecContext *flac = s->priv_data;
 
     if (!flac->found_seektable || !(s->flags&AVFMT_FLAG_FAST_SEEK)) {
+    	DLOG("%s seek FAIL #1 flac->found_seektable=%d s->flags=0x%x", __FUNC__, flac->found_seektable, s->flags);
         return -1;
     }
 
     index = av_index_search_timestamp(s->streams[0], timestamp, flags);
-    if(index<0 || index >= s->streams[0]->nb_index_entries)
+    if(index<0 || index >= s->streams[0]->nb_index_entries) {
+    	DLOG("%s seek FAIL #2", __FUNC__);
         return -1;
+    }
 
     e = s->streams[0]->index_entries[index];
+    DLOG("%s seek pos=%" PRId64, __FUNC__, e.pos);
     pos = avio_seek(s->pb, e.pos, SEEK_SET);
     if (pos >= 0) {
         return 0;
