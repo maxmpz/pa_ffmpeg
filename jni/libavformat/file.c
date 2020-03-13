@@ -94,6 +94,7 @@ static const AVOption file_options[] = {
 
 static const AVOption pipe_options[] = {
     { "blocksize", NULL_IF_CONFIG_SMALL("set I/O operation maximum block size"), offsetof(FileContext, blocksize), AV_OPT_TYPE_INT, { .i64 = INT_MAX }, 1, INT_MAX, AV_OPT_FLAG_ENCODING_PARAM }, // PAMP changes
+	{ "seekable", NULL_IF_CONFIG_SMALL("Sets if the file is seekable"), offsetof(FileContext, seekable), AV_OPT_TYPE_INT, { .i64 = -1 }, -1, 0, AV_OPT_FLAG_DECODING_PARAM | AV_OPT_FLAG_ENCODING_PARAM }, // PAMP changes
     { NULL }
 };
 
@@ -405,9 +406,10 @@ static int pipe_open(URLContext *h, const char *filename, int flags)
 #endif
     c->fd = fd;
 #if PAMP_CHANGES // PAMP change: allow seeksable property for pipe protocol. REVISIT: check for actual pipe?
+    int orig_seekable = c->seekable;
     if (c->seekable >= 0)
         h->is_streamed = !c->seekable;
-    DLOG("%s is_streamed=%d seekable=%d", __FUNC__, h->is_streamed, c->seekable);
+    DLOG("%s is_streamed=%d seekable=%d orig_seekable=%d", __FUNC__, h->is_streamed, c->seekable, orig_seekable);
 #else
     h->is_streamed = 1;
 #endif
