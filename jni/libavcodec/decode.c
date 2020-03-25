@@ -846,7 +846,7 @@ static int compat_decode(AVCodecContext *avctx, AVFrame *frame,
 
     if (avci->compat_decode_partial_size > 0 &&
         avci->compat_decode_partial_size != pkt->size) {
-        av_log(avctx, AV_LOG_ERROR,
+        av_log(avctx, AV_LOG_WARNING, // Pamp change - too much spam when seeking some formats such as APE
                "Got unexpected packet size after a partial decode\n");
         ret = AVERROR(EINVAL);
         goto finish;
