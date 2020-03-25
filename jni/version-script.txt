@@ -54,6 +54,7 @@
 		avio_alloc_context;
 		avio_context_free;
 		av_default_item_name;
+		av_find_input_format;
 
 		swri_oldapi_conv_flt_to_s16_neon;
 		swr_alloc;		
