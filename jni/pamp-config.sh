@@ -178,6 +178,7 @@ $FFMPEG_PATH/configure --target-os=linux \
 --enable-decoder=mlp \
 --enable-decoder=truehd \
 --enable-decoder=dca \
+--enable-decoder=ac3 \
 \
 --enable-parser=opus \
 --enable-parser=flac \
@@ -192,7 +193,9 @@ $FFMPEG_PATH/configure --target-os=linux \
 --enable-demuxer=mpegts \
 --enable-demuxer=mpegtsraw \
 --enable-demuxer=hls \
-\
+--enable-demuxer=ac3 \
+--enable-demuxer=eac3 \
+--enable-parser=ac3 \
 --enable-demuxer=wav \
 --enable-demuxer=flv \
 --enable-demuxer=live_flv \
