@@ -714,6 +714,11 @@ int ffio_read_indirect(AVIOContext *s, unsigned char *buf, int size, const unsig
     }
 }
 
+#include <android/log.h>
+#define LOG_TAG "aviobuf.c"
+#define DLOG(...) //__android_log_print(ANDROID_LOG_WARN,LOG_TAG,__VA_ARGS__)
+#define __FUNC__ __FUNCTION__
+
 int avio_read_partial(AVIOContext *s, unsigned char *buf, int size)
 {
     int len;
@@ -721,10 +726,13 @@ int avio_read_partial(AVIOContext *s, unsigned char *buf, int size)
     if (size < 0)
         return -1;
 
+	DLOG("%s size=>%d pos=%" PRId64 , __FUNC__, size, s->pos);
+
     if (s->read_packet && s->write_flag) {
         len = read_packet_wrapper(s, buf, size);
         if (len > 0)
             s->pos += len;
+        DLOG("%s #1 len=>%d", __FUNC__, len);
         return len;
     }
 
@@ -745,9 +753,16 @@ int avio_read_partial(AVIOContext *s, unsigned char *buf, int size)
     memcpy(buf, s->buf_ptr, len);
     s->buf_ptr += len;
     if (!len) {
-        if (s->error)      return s->error;
-        if (avio_feof(s))  return AVERROR_EOF;
+        if (s->error) {
+      	    DLOG("%s ERROR s->error=>%d", __FUNC__, s->error);
+        	return s->error;
+        }
+        if (avio_feof(s)) {
+        	DLOG("%s AVERROR_EOF", __FUNC__);
+        	return AVERROR_EOF;
+        }
     }
+    DLOG("%s OK len=>%d", __FUNC__, len);
     return len;
 }
 

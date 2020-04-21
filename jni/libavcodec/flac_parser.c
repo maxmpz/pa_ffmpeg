@@ -39,6 +39,12 @@
 #include "parser.h"
 #include "flac.h"
 
+#include <android/log.h>
+#define LOG_TAG "flac_parser.c"
+#define DLOG(...) //__android_log_print(ANDROID_LOG_WARN,LOG_TAG,__VA_ARGS__)
+#define __FUNC__ __FUNCTION__
+
+
 /** maximum number of adjacent headers that compare CRCs against each other   */
 #define FLAC_MAX_SEQUENTIAL_HEADERS 4
 /** minimum number of headers buffered and checked before returning frames    */
@@ -216,16 +222,25 @@ static int find_headers_search(FLACParseContext *fpc, uint8_t *buf, int buf_size
     uint32_t x;
 
     for (i = 0; i < mod_offset; i++) {
-        if ((AV_RB16(buf + i) & 0xFFFE) == 0xFFF8)
-            size = find_headers_search_validate(fpc, search_start + i);
+//        if ((AV_RB16(buf + i) & 0xFFFE) == 0xFFF8)
+//            size = find_headers_search_validate(fpc, search_start + i);
+    	if ((AV_RB16(buf + i) & 0xFFFE) == 0xFFF8) {
+            int ret = find_headers_search_validate(fpc, search_start + i);
+            size = FFMAX(size, ret);
+        }
     }
 
     for (; i < buf_size - 1; i += 4) {
-        x = AV_RB32(buf + i);
+        //x = AV_RB32(buf + i);
+    	x = AV_RN32(buf + i);
         if (((x & ~(x + 0x01010101)) & 0x80808080)) {
             for (j = 0; j < 4; j++) {
-                if ((AV_RB16(buf + i + j) & 0xFFFE) == 0xFFF8)
-                    size = find_headers_search_validate(fpc, search_start + i + j);
+//                if ((AV_RB16(buf + i + j) & 0xFFFE) == 0xFFF8)
+//                    size = find_headers_search_validate(fpc, search_start + i + j);
+            	if ((AV_RB16(buf + i + j) & 0xFFFE) == 0xFFF8) {
+            		int ret = find_headers_search_validate(fpc, search_start + i + j);
+            		size = FFMAX(size, ret);
+            	}
             }
         }
     }
@@ -251,7 +266,8 @@ static int find_new_headers(FLACParseContext *fpc, int search_start)
         uint8_t wrap[2];
 
         wrap[0]  = buf[read_len - 1];
-        read_len = search_end - search_start + 1;
+        //read_len = search_end - search_start + 1;
+        read_len = search_end - (search_start + 1) + 1;
 
         /* search_start + 1 is the post-wrap offset in the fifo. */
         buf      = flac_fifo_read(fpc, search_start + 1, &read_len);
@@ -321,7 +337,7 @@ static int check_header_mismatch(FLACParseContext  *fpc,
         (child_fi->frame_or_sample_num
          != header_fi->frame_or_sample_num + 1)) {
         FLACHeaderMarker *curr;
-        int expected_frame_num, expected_sample_num;
+        int64_t expected_frame_num, expected_sample_num;
         /* If there are frames in the middle we expect this deduction,
            as they are probably valid and this one follows it */
 
@@ -498,10 +514,16 @@ static int get_best_header(FLACParseContext* fpc, const uint8_t **poutbuf,
 
 
     if (fpc->pc->flags & PARSER_FLAG_USE_CODEC_TS){
-        if (header->fi.is_var_size)
-          fpc->pc->pts = header->fi.frame_or_sample_num;
-        else if (header->best_child)
-          fpc->pc->pts = header->fi.frame_or_sample_num * header->fi.blocksize;
+    	if(header->best_child) { // MaxMP: always check for best_child, otherwise we're getting bad header here for some rare flacs
+			 if (header->fi.is_var_size) {
+			  fpc->pc->pts = header->fi.frame_or_sample_num;
+			  DLOG("%s pts=>%" PRId64, __FUNC__, fpc->pc->pts);
+			}
+			else {
+			  fpc->pc->pts = header->fi.frame_or_sample_num * header->fi.blocksize;
+			  DLOG("%s #2 pts=>%" PRId64, __FUNC__, fpc->pc->pts);
+			}
+    	}
     }
 
     fpc->best_header_valid = 0;
@@ -570,7 +592,7 @@ static int flac_parse(AVCodecParserContext *s, AVCodecContext *avctx,
         for (curr = best_child->next; curr; curr = curr->next)
             curr->offset -= best_child->offset;
 
-        fpc->nb_headers_buffered--;
+        //fpc->nb_headers_buffered--;
         best_child->offset = 0;
         fpc->headers       = best_child;
         if (fpc->nb_headers_buffered >= FLAC_MIN_HEADERS) {
@@ -607,7 +629,7 @@ static int flac_parse(AVCodecParserContext *s, AVCodecContext *avctx,
         /* Pad the end once if EOF, to check the final region for headers. */
         if (!buf || !buf_size) {
             fpc->end_padded      = 1;
-            buf_size = MAX_FRAME_HEADER_SIZE;
+            //buf_size = MAX_FRAME_HEADER_SIZE;
             read_end = read_start + MAX_FRAME_HEADER_SIZE;
         } else {
             /* The maximum read size is the upper-bound of what the parser
@@ -682,7 +704,7 @@ static int flac_parse(AVCodecParserContext *s, AVCodecContext *avctx,
                 fpc->fifo_buf->wptr += fpc->fifo_buf->end -
                     fpc->fifo_buf->buffer;
             }
-            buf_size = 0;
+            //buf_size = 0;
             read_start = read_end = NULL;
         }
     }
@@ -751,6 +773,7 @@ static void flac_parse_close(AVCodecParserContext *c)
         av_free(curr);
         curr = temp;
     }
+    fpc->headers = NULL;
     av_fifo_freep(&fpc->fifo_buf);
     av_freep(&fpc->wrap_buf);
 }

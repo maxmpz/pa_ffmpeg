@@ -21,7 +21,7 @@
 
 #include <android/log.h>
 #define LOG_TAG "af flacdec.c"
-#define DLOG(...) //__android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
+#define DLOG(...) //__android_log_print(ANDROID_LOG_WARN,LOG_TAG,__VA_ARGS__)
 #define __FUNC__ __FUNCTION__
 
 #include "libavcodec/flac.h"
@@ -322,13 +322,18 @@ static av_unused int64_t flac_read_timestamp(AVFormatContext *s, int stream_inde
     int ret;
     int64_t pts = AV_NOPTS_VALUE;
 
-    DLOG("%s seek pos=%" PRId64, __FUNC__, *ppos);
-    if (avio_seek(s->pb, *ppos, SEEK_SET) < 0)
+//    int64_t file_size = avio_size(s->pb);
+//    DLOG("%s pos=%" PRId64 " pos_limit=%" PRId64 " file_size=%" PRId64, __FUNC__, *ppos, pos_limit, file_size);
+
+    if (avio_seek(s->pb, *ppos, SEEK_SET) < 0) {
+    	DLOG("%s FAIL !avio_seek =>AV_NOPTS_VALUE pos=%" PRId64, __FUNC__, *ppos);
         return AV_NOPTS_VALUE;
+    }
 
     av_init_packet(&pkt);
     parser = av_parser_init(st->codecpar->codec_id);
     if (!parser){
+    	DLOG("%s FAIL !parser =>AV_NOPTS_VALUE pos=%" PRId64, __FUNC__, *ppos);
         return AV_NOPTS_VALUE;
     }
     parser->flags |= PARSER_FLAG_USE_CODEC_TS;
@@ -339,10 +344,14 @@ static av_unused int64_t flac_read_timestamp(AVFormatContext *s, int stream_inde
             if (ret == AVERROR(EAGAIN))
                 continue;
             else {
+            	// 05-17 00:21:35.639: W/af flacdec.c(1537): flac_read_timestamp !ff_raw_read_partial_packet ret=0xdfb9b0bb pos=228262465
+
+            	DLOG("%s !ff_raw_read_partial_packet ret=0x%x pos=%" PRId64, __FUNC__, ret, *ppos);
                 av_packet_unref(&pkt);
                 av_assert1(!pkt.size);
             }
-        }
+        } else DLOG("%s OK ff_raw_read_partial_packet ret=0x%x pos=%" PRId64, __FUNC__, ret, *ppos);
+
         av_init_packet(&out_pkt);
         av_parser_parse2(parser, st->internal->avctx,
                          &out_pkt.data, &out_pkt.size, pkt.data, pkt.size,
@@ -356,12 +365,18 @@ static av_unused int64_t flac_read_timestamp(AVFormatContext *s, int stream_inde
                 // calculate frame start position from next frame backwards
                 *ppos = parser->next_frame_offset - size;
                 pts = parser->pts;
+             	DLOG("%s OK pos=>%" PRId64, __FUNC__, *ppos);
+
                 break;
             }
-        } else if (ret < 0)
+        } else if (ret < 0) {
+        	DLOG("%s FAIL !ret=0x%x =>AV_NOPTS_VALUE pos=%" PRId64, __FUNC__, ret, *ppos);
             break;
+        }
     }
     av_parser_close(parser);
+
+    DLOG("%s OK pts=%" PRId64 " pos=%" PRId64, __FUNC__, pts, *ppos);
     return pts;
 }
 

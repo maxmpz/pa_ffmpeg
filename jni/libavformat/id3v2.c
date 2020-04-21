@@ -346,7 +346,6 @@ static void read_ttag(AVFormatContext *s, AVIOContext *pb, int taglen,
 
 #if PAMP_CONFIG_NO_TAGS // Begin PAMP change - skip everything unrelated to replaygain
     if(!s || (s->flags & PAMP_AVFMT_FLAG_SKIP_TAGS)) {
-    	DLOG("%s key=%s", __FUNC__, key);
     	if (!(strcmp(key, "TXXX") && strcmp(key, "TXX"))) {
     		key = dst;
     		DLOG("%s 2 key=%s", __FUNC__, key);
@@ -365,7 +364,10 @@ static void read_ttag(AVFormatContext *s, AVIOContext *pb, int taglen,
 				//return;
 			}
     	} else if (!*dst) { //Sets dst itself to NULL if string is empty
+    		DLOG("%s EMPTY key=%s", __FUNC__, key);
     		av_freep(&dst);
+    	} else {
+    		DLOG("%s IGNORE key=%s", __FUNC__, key);
     	}
 
     } else
