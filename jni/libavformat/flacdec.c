@@ -130,6 +130,7 @@ static int flac_read_header(AVFormatContext *s)
             break;
         /* skip metadata block for unsupported types */
         default:
+        	DLOG("%s skip metadata_size=%d metadata_type=%d", __FUNC__, metadata_size, metadata_type);
             ret = avio_skip(s->pb, metadata_size);
             if (ret < 0)
                 return ret;

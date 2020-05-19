@@ -9,7 +9,11 @@ FFMPEG_LOCAL_PATH := $(FFMPEG_ROOT)/$(DIR_NAME)
 SUBDIR := $(FFMPEG_LOCAL_PATH)/
 
 ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
-include ffbuild/config-arm64.mak
+	ifeq ($(PA_MIN_MODE),1)
+		include ffbuild/config-arm64-min.mak
+	else
+		include ffbuild/config-arm64.mak
+	endif
 
 else ifneq (,$(findstring armeabi-v7a, $(TARGET_ARCH_ABI)))
 include ffbuild/config-neon.mak

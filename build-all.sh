@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if [[ $1 != 'arm64' && $1 != 'neon' && $1 != 'neon-hard' ]] ; then
-    echo "Usage: build-all.sh arm64|neon|neon-hard"
+if [[ $1 != 'arm64' && $1 != 'neon' && $1 != 'neon-hard' && $1 != 'arm64-min' ]] ; then
+    echo "Usage: build-all.sh arm64|neon|neon-hard|arm64-min"
     echo
     exit 1
 fi

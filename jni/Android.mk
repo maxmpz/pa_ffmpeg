@@ -3,12 +3,14 @@
 
 $(info Using TOOLCHAIN_NAME=$(TOOLCHAIN_NAME))
 $(info TARGET_ARCH_ABI=$(TARGET_ARCH_ABI))
+ifeq ($(PA_MIN_MODE),1)
+$(info PA_MIN_MODE PA_MIN_MODE PA_MIN_MODE PA_MIN_MODE)	
+endif
+
 
 LOCAL_PATH := $(call my-dir)
 PA_GLOBAL_PATH := $(call my-dir)
 
-
-USE_VERSION := #yes # Enables build.version based versioning. Ffmpeg requires this to be in sync
 
 FFMPEG_ROOT := ../FFmpeg
 FFMPEG_OVERRIDE_ROOT := $(LOCAL_PATH) # This dir, basically
@@ -51,16 +53,11 @@ endif
 
 audioplayer_PATH := $(abspath $(LOCAL_PATH)/../../audioplayer/)
 
-ifeq ($(USE_VERSION),yes)
-include $(audioplayer_PATH)/build.num # build.number=xxx => $(build.number)
-endif
-
 # NOTE: there is PA_GLOBAL_TARGET_ARCH_NAME (armeabi-v7a/arm64-v8a), TARGET_ARCH (arm/arm64), and ARCH (arm/aarch64)
 
 ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
 	PA_GLOBAL_CFLAGS += -march=armv8-a+simd #-D_NDK_MATH_NO_SOFTFP=1
 	PA_GLOBAL_CFLAGS += -DHAVE_ARMV8=1 -DHAVE_NEON=1
-	
 else ifneq (,$(findstring armeabi-v7a, $(TARGET_ARCH_ABI)))
 	# TODO -mtune=cortex-a53
 	PA_GLOBAL_CFLAGS += -march=armv7-a -marm -mtune=cortex-a9 -Os -mtune=cortex-a53  
@@ -80,7 +77,10 @@ $(info Hard-floats)
 	else # gcc
 		PA_GLOBAL_CFLAGS += -mno-thumb-interwork
 	endif
-	
+endif
+
+ifeq ($(PA_MIN_MODE),1)
+	PA_GLOBAL_CFLAGS += -DHAVE_PA_MIN_MODE=1
 endif
 
 ifneq (,$(findstring clang,$(NDK_TOOLCHAIN_VERSION))) # clang
@@ -171,12 +171,16 @@ LOCAL_LDLIBS += -llog -lz
 
 LOCAL_WHOLE_STATIC_LIBRARIES := libavformat libavutil libsoxr-prebuilt libmbedcrypto-prebuilt libmbedx509-prebuilt libmbedtls-prebuilt libswresample libavcodec #libswresample-prebuilt #libtta #libjni
 
-ifeq ($(USE_VERSION),yes)
-LOCAL_MODULE := libffmpeg_neon.$(build.number)
-else
 # REVISIT: drop _neon. For now using this as it's used everywhere
-LOCAL_MODULE := libffmpeg_neon
-endif 
+LOCAL_LDFLAGS := $(PA_GLOBAL_LDFLAGS) -Wl,--discard-all -Wl,--gc-sections #-Wl,--print-gc-sections
+
+ifeq ($(PA_MIN_MODE),1)
+	LOCAL_LDFLAGS += -Wl,--version-script=version-script-min.txt
+	LOCAL_MODULE := libffmpeg_min
+else
+	LOCAL_LDFLAGS += -Wl,--version-script=version-script.txt 
+	LOCAL_MODULE := libffmpeg_neon
+endif
 
 #LOCAL_SHARED_LIBRARIES := libopus-prebuilt 
 
@@ -187,7 +191,6 @@ cmd-strip = echo
 else
 #$(warning NO_STRIP SO)
 #cmd-strip = echo
-LOCAL_LDFLAGS := $(PA_GLOBAL_LDFLAGS) -Wl,--discard-all -Wl,--gc-sections -Wl,--version-script=version-script.txt #-Wl,--print-gc-sections
 
 
 ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
@@ -203,13 +206,8 @@ endif
 
 LIBS_CUSTOM_PATH := $(audioplayer_PATH)/libs/$(PA_GLOBAL_TARGET_ARCH_NAME)
 
-ifeq ($(USE_VERSION),yes)
-PAMP_DST_BASE := $(LIBS_CUSTOM_PATH)/$(subst .$(build.number),,$(LOCAL_MODULE))
-PAMP_DST := $(PAMP_DST_BASE).$(build.number).so
-else
 PAMP_DST_BASE := $(LIBS_CUSTOM_PATH)/$(LOCAL_MODULE)
 PAMP_DST := $(PAMP_DST_BASE).so
-endif
 
 PAMP_DST_CLEAN := $(PAMP_DST_BASE).*
 

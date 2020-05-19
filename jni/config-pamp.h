@@ -1,7 +1,11 @@
 // NOTE: overwritten by pamp-config.sh from config-pamp.h
 
 #if HAVE_ARMV8
-#	include "config-arm64.h"
+#	if HAVE_PA_MIN_MODE
+#		include "config-arm64-min.h"
+#	else
+#		include "config-arm64.h"
+#	endif
 #elif HAVE_NEON
 #	include "config-neon.h"
 #	undef HAVE_VFP_ARGS // NOTE: IMPORTANT to propertly handle soft/hard floats for passing params to .S

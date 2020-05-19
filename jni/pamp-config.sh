@@ -13,8 +13,16 @@ elif [[ $1 == 'x64' ]] ; then
 	echo "Config: x64"
 	echo
 	
+elif [[ $1 ==  'arm64-min' ]] ; then
+	echo "Config: arm64-min"
+	echo
+	
+elif [[ $1 == 'neon-hard-min' ]] ; then
+	echo "Config: neon-hard-min"
+	echo
+
 else 
-    echo "Usage: pamp-config.sh neon-hard|arm64|x64"
+    echo "Usage: pamp-config.sh neon-hard|arm64|x64|neon-hard-min|arm64-min"
     echo
     exit 1
 fi
@@ -23,8 +31,15 @@ FFMPEG_PATH=../FFmpeg
 NDK_PATH=/opt/android-ndk-r11c
 GCC_VER=4.9
 LOCAL_PATH=$PWD
+TARGET_CONFIG_SUFFIX=$1
+MIN=
 
-if [[ $1 ==  'arm64' ]] ; then
+if [[ $1 ==  'arm64-min' ]] || [[ $1 == 'neon-hard-min' ]]; then
+	MIN=1
+fi
+
+
+if [[ $1 ==  'arm64' ]] || [[ $1 ==  'arm64-min' ]]; then
 	FFMPEG_ARCH=aarch64
 	PLATFORM=$NDK_PATH/platforms/android-21/arch-arm64
 	EABI=aarch64-linux-android-4.9
@@ -39,9 +54,8 @@ if [[ $1 ==  'arm64' ]] ; then
 		-L$LOCAL_PATH/../../mbedtls/crypto/build/arm64-v8a \
 		-L$LOCAL_PATH/../../mbedtls/build/arm64-v8a \
 		"
-	TARGET_CONFIG_FILENAME=config-arm64	
 	
-elif [[ $1 == 'neon-hard' ]] ; then
+elif [[ $1 == 'neon-hard' ]] || [[ $1 ==  'neon-hard-min' ]]; then
 	FFMPEG_ARCH=arm
 	PLATFORM=$NDK_PATH/platforms/android-21/arch-arm
 	EABI=arm-linux-androideabi-4.9
@@ -63,8 +77,6 @@ elif [[ $1 == 'neon-hard' ]] ; then
 		-L$LOCAL_PATH/../../mbedtls/crypto/build/armeabi-v7a \
         -L$LOCAL_PATH/../../mbedtls/build/armeabi-v7a \
         "
-	TARGET_CONFIG_FILENAME=config-neon
-	
 elif [[ $1 == 'x64' ]] ; then
 	FFMPEG_ARCH=aarch64
 	PLATFORM=$NDK_PATH/platforms/android-21/arch-x86_64
@@ -80,8 +92,6 @@ elif [[ $1 == 'x64' ]] ; then
 		"
 # TODO: mbedtls x86_64 out build dirs
 		
-	TARGET_CONFIG_FILENAME=config-arm64	
-	
 fi
 
 
@@ -100,7 +110,6 @@ NEON_CONFIG=" \
 #--enable-decoder=mp3adu \
 #--enable-avresample \
 #--enable-decoder=wavpack \
-#--enable-demuxer=wv \
 #--enable-decoder=libopus \
 #--enable-decoder=libopencore_amrnb \
 #--enable-decoder=libopencore_amrwb \
@@ -112,7 +121,42 @@ NEON_CONFIG=" \
 #--enable-protocol=udp \
 #--enable-protocol=tls \
 
-# NEW: 
+# NEW:
+
+MIN_CONFIG="\
+$FFMPEG_PATH/configure --target-os=linux \
+--arch=$FFMPEG_ARCH \
+--enable-cross-compile \
+--cc=$PREBUILT/bin/${GCC_PREFIX}gcc \
+--as=$PREBUILT/bin/${GCC_PREFIX}gcc \
+--cross-prefix=$PREBUILT/bin/${GCC_PREFIX} \
+--sysinclude=$PLATFORM/usr/include \
+--nm=$PREBUILT/bin/${GCC_PREFIX}nm \
+--extra-ldflags=\"$LDFLAGS\" \
+--enable-small \
+--enable-pic \
+--enable-zlib \
+\
+--disable-autodetect \
+--disable-runtime-cpudetect \
+--disable-symver \
+--disable-pixelutils \
+--disable-doc \
+--disable-debug \
+--disable-programs \
+--disable-avdevice \
+--disable-swscale \
+--disable-avfilter \
+--disable-everything \
+--disable-network \
+--disable-pthreads \
+--disable-faan \
+--disable-lzo \
+--disable-parser=dirac \
+\
+--enable-version3 \
+\
+" 
 
 COMMON_CONFIG="\
 $FFMPEG_PATH/configure --target-os=linux \
@@ -341,19 +385,60 @@ $FFMPEG_PATH/configure --target-os=linux \
 #cp $FFMPEG_PATH/config.h $FFMPEG_PATH/config.old.h
 rm -f config.h
 
-#echo "$COMMON_CONFIG $NEON_CONFIG"
-#exit 1
 
-eval "$COMMON_CONFIG $NEON_CONFIG"
+if [[ "$MIN" == 1 ]]; then
+	#echo "$MIN_CONFIG $NEON_CONFIG"
+	#exit 1
+	eval "$MIN_CONFIG $NEON_CONFIG"
+else
+	#echo "$COMMON_CONFIG $NEON_CONFIG"
+	#exit 1
+	eval "$COMMON_CONFIG $NEON_CONFIG"
+fi
+
+
 if [ $? -ne 0 ]; then
 	exit 1
 fi
 
-mv config.h ${TARGET_CONFIG_FILENAME}.h  # REVISIT: use local dir
-mv ffbuild/config.mak ffbuild/${TARGET_CONFIG_FILENAME}.mak  # REVISIT: use local dir
+#libavutil/avconfig.h
+#libavfilter/filter_list.c
+#libavcodec/codec_list.c
+#libavcodec/parser_list.c
+#libavcodec/bsf_list.c
+#libavformat/demuxer_list.c
+#libavformat/muxer_list.c
+#libavdevice/indev_list.c
+#libavdevice/outdev_list.c
+#libavformat/protocol_list.c
+#ffbuild/config.sh is unchange
+
+# Move copy all the generated files
+mv ffbuild/config.mak ffbuild/config-${TARGET_CONFIG_SUFFIX}.mak  
+mv config.h config-${TARGET_CONFIG_SUFFIX}.h  
+mv libavutil/avconfig.h libavutil/avconfig-${TARGET_CONFIG_SUFFIX}.h
+mv libavfilter/filter_list.c libavfilter/filter_list-${TARGET_CONFIG_SUFFIX}.c
+mv libavcodec/codec_list.c libavcodec/codec_list-${TARGET_CONFIG_SUFFIX}.c
+mv libavcodec/parser_list.c libavcodec/parser_list-${TARGET_CONFIG_SUFFIX}.c
+mv libavcodec/bsf_list.c libavcodec/bsf_list-${TARGET_CONFIG_SUFFIX}.c
+mv libavformat/demuxer_list.c libavformat/demuxer_list-${TARGET_CONFIG_SUFFIX}.c
+#mv libavformat/muxer_list.c libavformat/muxer_list-${TARGET_CONFIG_SUFFIX}.c # NOTE: always nulls now
+#mv libavdevice/indev_list.c libavdevice/indev_list-${TARGET_CONFIG_SUFFIX}.c # NOTE: always nulls now
+#mv libavdevice/outdev_list.c libavdevice/outdev_list-${TARGET_CONFIG_SUFFIX}.c # NOTE: always nulls now
+mv libavformat/protocol_list.c libavformat/protocol_list-${TARGET_CONFIG_SUFFIX}.c
 
 cp config-pamp.h config.h
 cp config-pamp.mak ffbuild/config.mak
+cp libavutil/avconfig-pamp.h libavutil/avconfig.h
+cp libavfilter/filter_list-pamp.c libavfilter/filter_list.c
+cp libavcodec/codec_list-pamp.c libavcodec/codec_list.c
+cp libavcodec/parser_list-pamp.c libavcodec/parser_list.c
+cp libavcodec/bsf_list-pamp.c libavcodec/bsf_list.c
+cp libavformat/demuxer_list-pamp.c libavformat/demuxer_list.c
+#cp libavformat/muxer_list-pamp.c libavformat/muxer_list.c
+#cp libavdevice/indev_list-pamp.c libavdevice/indev_list.c
+#cp libavdevice/outdev_list-pamp.c libavdevice/outdev_list.c
+cp libavformat/protocol_list-pamp.c libavformat/protocol_list.c
 
 #mv libavutil/avconfig.h $FFMPEG_PATH/libavutil/
 

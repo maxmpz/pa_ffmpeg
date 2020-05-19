@@ -9,8 +9,11 @@ SUBDIR := $(FFMPEG_LOCAL_PATH)/
 
 # NOTE: using .maks from overridden == jni/ffbuild/ location
 ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
-include $(FFMPEG_OVERRIDE_ROOT)/ffbuild/config-arm64.mak
-
+	ifeq ($(PA_MIN_MODE),1)
+		include $(FFMPEG_OVERRIDE_ROOT)/ffbuild/config-arm64-min.mak
+	else
+		include $(FFMPEG_OVERRIDE_ROOT)/ffbuild/config-arm64.mak
+	endif
 else ifneq (,$(findstring armeabi-v7a, $(TARGET_ARCH_ABI)))
 include $(FFMPEG_OVERRIDE_ROOT)/ffbuild/config-neon.mak
 
