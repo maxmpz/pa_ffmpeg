@@ -60,6 +60,9 @@ elif [[ $1 == 'neon-hard' ]] || [[ $1 ==  'neon-hard-min' ]]; then
 	PLATFORM=$NDK_PATH/platforms/android-21/arch-arm
 	EABI=arm-linux-androideabi-4.9
 	
+	# NOTE: using -neon suffix for the neon-hard
+	TARGET_CONFIG_SUFFIX=neon
+	
 	# HARD
 	#-mno-unaligned-access 
 	ARM_FF_FLAGS="-march=armv7-a -mcpu=cortex-a9 -mfpu=neon -O3 -mfloat-abi=hard -mhard-float -D_NDK_MATH_NO_SOFTFP=1"  
