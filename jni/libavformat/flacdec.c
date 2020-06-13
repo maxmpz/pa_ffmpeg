@@ -103,6 +103,7 @@ static int flac_read_header(AVFormatContext *s)
         	// Ensure we seeked enough
         	int64_t pos2 = avio_tell(s->pb);
         	if(pos2 - pos < metadata_size) {
+        		DLOG("%s seek2 imgSize=%u pos=%" PRId64 " metadata_size=%d", __FUNC__, imgSize, pos, metadata_size);
         		avio_seek(s->pb, pos + metadata_size, SEEK_SET);
         	}
 
@@ -130,8 +131,8 @@ static int flac_read_header(AVFormatContext *s)
             break;
         /* skip metadata block for unsupported types */
         default:
-        	DLOG("%s skip metadata_size=%d metadata_type=%d", __FUNC__, metadata_size, metadata_type);
             ret = avio_skip(s->pb, metadata_size);
+        	DLOG("%s skip metadata_size=%d metadata_type=%d ret=%d", __FUNC__, metadata_size, metadata_type, ret);
             if (ret < 0)
                 return ret;
         }
@@ -323,8 +324,7 @@ static av_unused int64_t flac_read_timestamp(AVFormatContext *s, int stream_inde
     int ret;
     int64_t pts = AV_NOPTS_VALUE;
 
-//    int64_t file_size = avio_size(s->pb);
-//    DLOG("%s pos=%" PRId64 " pos_limit=%" PRId64 " file_size=%" PRId64, __FUNC__, *ppos, pos_limit, file_size);
+    DLOG("%s pos=%" PRId64 " pos_limit=%" PRId64 " file_size=%" PRId64, __FUNC__, *ppos, pos_limit, avio_size(s->pb));
 
     if (avio_seek(s->pb, *ppos, SEEK_SET) < 0) {
     	DLOG("%s FAIL !avio_seek =>AV_NOPTS_VALUE pos=%" PRId64, __FUNC__, *ppos);
@@ -340,7 +340,10 @@ static av_unused int64_t flac_read_timestamp(AVFormatContext *s, int stream_inde
     parser->flags |= PARSER_FLAG_USE_CODEC_TS;
 
     for (;;){
-        ret = ff_raw_read_partial_packet(s, &pkt);
+    	uint8_t *data;
+    	int size;
+
+        ret = ff_raw_read_partial_packet(s, &pkt); // ret == 0x400 => 1024
         if (ret < 0){
             if (ret == AVERROR(EAGAIN))
                 continue;
@@ -353,27 +356,49 @@ static av_unused int64_t flac_read_timestamp(AVFormatContext *s, int stream_inde
             }
         } else DLOG("%s OK ff_raw_read_partial_packet ret=0x%x pos=%" PRId64, __FUNC__, ret, *ppos);
 
-        av_init_packet(&out_pkt);
+        DLOG("%s =>av_parser_parse2 pos=%" PRId64, __FUNC__, *ppos);
+//        av_init_packet(&out_pkt);
+//        av_parser_parse2(parser, st->internal->avctx,
+//                         &out_pkt.data, &out_pkt.size, pkt.data, pkt.size,
+//                         pkt.pts, pkt.dts, *ppos);
+//
+//        av_packet_unref(&pkt);
+//        if (out_pkt.size){
+//            int size = out_pkt.size;
+//            if (parser->pts != AV_NOPTS_VALUE){
+//                // seeking may not have started from beginning of a frame
+//                // calculate frame start position from next frame backwards
+//                *ppos = parser->next_frame_offset - size;
+//                pts = parser->pts;
+//             	DLOG("%s OK pos=>%" PRId64, __FUNC__, *ppos);
+//
+//                break;
+//            }
+//            DLOG("%s AV_NOPTS_VALUE pos=%" PRId64, __FUNC__, *ppos);
+//        } else if (ret < 0) {
+//        	DLOG("%s FAIL !ret=0x%x =>AV_NOPTS_VALUE pos=%" PRId64, __FUNC__, ret, *ppos);
+//            break;
+//        }
+
         av_parser_parse2(parser, st->internal->avctx,
-                         &out_pkt.data, &out_pkt.size, pkt.data, pkt.size,
+                         &data, &size, pkt.data, pkt.size,
                          pkt.pts, pkt.dts, *ppos);
 
         av_packet_unref(&pkt);
-        if (out_pkt.size){
-            int size = out_pkt.size;
+        if (size) {
             if (parser->pts != AV_NOPTS_VALUE){
                 // seeking may not have started from beginning of a frame
                 // calculate frame start position from next frame backwards
                 *ppos = parser->next_frame_offset - size;
                 pts = parser->pts;
-             	DLOG("%s OK pos=>%" PRId64, __FUNC__, *ppos);
-
+                DLOG("%s OK pos=>%" PRId64 " pts=>%" PRId64, __FUNC__, *ppos, pts);
                 break;
             }
+            DLOG("%s AV_NOPTS_VALUE pos=%" PRId64 " size=>%d", __FUNC__, *ppos, size);
         } else if (ret < 0) {
         	DLOG("%s FAIL !ret=0x%x =>AV_NOPTS_VALUE pos=%" PRId64, __FUNC__, ret, *ppos);
             break;
-        }
+        } else DLOG("%s IGNORE !ret", __FUNC__);
     }
     av_parser_close(parser);
 

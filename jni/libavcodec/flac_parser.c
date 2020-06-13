@@ -42,6 +42,7 @@
 #include <android/log.h>
 #define LOG_TAG "flac_parser.c"
 #define DLOG(...) //__android_log_print(ANDROID_LOG_WARN,LOG_TAG,__VA_ARGS__)
+#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
 #define __FUNC__ __FUNCTION__
 
 
@@ -547,6 +548,8 @@ static int flac_parse(AVCodecParserContext *s, AVCodecContext *avctx,
     const uint8_t *read_end   = buf;
     const uint8_t *read_start = buf;
 
+    DLOG("%s buf_size=%d", __FUNC__, buf_size);
+
     if (s->flags & PARSER_FLAG_COMPLETE_FRAMES) {
         FLACFrameInfo fi;
         if (frame_header_is_valid(avctx, buf, &fi)) {
@@ -638,14 +641,23 @@ static int flac_parse(AVCodecParserContext *s, AVCodecContext *avctx,
             read_end       = read_end + FFMIN(buf + buf_size - read_end,
                                               nb_desired * FLAC_AVG_FRAME_SIZE);
         }
-
-#if !PAMP_CHANGES // Pamp change: some rare flac files may fail here, while being perfectly OK otherwise
+#if PAMP_CHANGES // Pamp change: ensure start/end are OK
+        if(read_end < read_start) { // Pamp change
+        	LOGE("%s read_end=%p read_start=%p", __FUNC__, read_end, read_start);
+            goto handle_error;
+        }
+#endif
+#if !PAMP_CHANGES // Pamp change: some rare flac files may fail here, while being perfectly OK otherwise (855-not-played)
         if (!av_fifo_space(fpc->fifo_buf) &&
             av_fifo_size(fpc->fifo_buf) / FLAC_AVG_FRAME_SIZE >
             fpc->nb_headers_buffered * 20) {
             /* There is less than one valid flac header buffered for 20 headers
              * buffered. Therefore the fifo is most likely filled with invalid
              * data and the input is not a flac file. */
+        	DLOG("%s FAIL 1 av_fifo_size=%d av_fifo_size/FLAC_AVG_FRAME_SIZE=%d nb_headers_buffered=%d", __FUNC__,
+        			av_fifo_size(fpc->fifo_buf),
+					av_fifo_size(fpc->fifo_buf) / FLAC_AVG_FRAME_SIZE,
+					fpc->nb_headers_buffered);
             goto handle_error;
         }
 #endif
@@ -656,8 +668,11 @@ static int flac_parse(AVCodecParserContext *s, AVCodecContext *avctx,
             av_log(avctx, AV_LOG_ERROR,
                    "couldn't reallocate buffer of size %"PTRDIFF_SPECIFIER"\n",
                    (read_end - read_start) + av_fifo_size(fpc->fifo_buf));
+            DLOG("%s FAIL 2", __FUNC__);
             goto handle_error;
         }
+
+        DLOG("%s buf=%p buf_size=%d", __FUNC__, buf, buf_size);
 
         if (buf && buf_size) {
             av_fifo_generic_write(fpc->fifo_buf, (void*) read_start,
@@ -744,6 +759,7 @@ static int flac_parse(AVCodecParserContext *s, AVCodecContext *avctx,
 handle_error:
     *poutbuf      = NULL;
     *poutbuf_size = 0;
+    DLOG("%s handle_error ret=%d", __FUNC__, buf_size ? read_end - buf : 0);
     return buf_size ? read_end - buf : 0;
 }
 
