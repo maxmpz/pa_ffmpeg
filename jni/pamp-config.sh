@@ -1,5 +1,6 @@
 #!/bin/bash
 
+TARGET_CONFIG_SUFFIX=$1
 
 if [[ $1 ==  'arm64' ]] ; then
 	echo "Config: arm64"
@@ -8,6 +9,8 @@ if [[ $1 ==  'arm64' ]] ; then
 elif [[ $1 == 'neon-hard' ]] ; then
 	echo "Config: neon-hard"
 	echo
+	# NOTE: using -neon/-neon-min suffix for the neon-hard
+	TARGET_CONFIG_SUFFIX=neon
 
 elif [[ $1 == 'x64' ]] ; then
 	echo "Config: x64"
@@ -20,6 +23,8 @@ elif [[ $1 ==  'arm64-min' ]] ; then
 elif [[ $1 == 'neon-hard-min' ]] ; then
 	echo "Config: neon-hard-min"
 	echo
+	# NOTE: using -neon/-neon-min suffix for the neon-hard
+	TARGET_CONFIG_SUFFIX=neon-min
 
 else 
     echo "Usage: pamp-config.sh neon-hard|arm64|x64|neon-hard-min|arm64-min"
@@ -31,7 +36,6 @@ FFMPEG_PATH=../FFmpeg
 NDK_PATH=/opt/android-ndk-r11c
 GCC_VER=4.9
 LOCAL_PATH=$PWD
-TARGET_CONFIG_SUFFIX=$1
 MIN=
 
 if [[ $1 ==  'arm64-min' ]] || [[ $1 == 'neon-hard-min' ]]; then
@@ -60,8 +64,6 @@ elif [[ $1 == 'neon-hard' ]] || [[ $1 ==  'neon-hard-min' ]]; then
 	PLATFORM=$NDK_PATH/platforms/android-21/arch-arm
 	EABI=arm-linux-androideabi-4.9
 	
-	# NOTE: using -neon suffix for the neon-hard
-	TARGET_CONFIG_SUFFIX=neon
 	
 	# HARD
 	#-mno-unaligned-access 
