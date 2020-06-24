@@ -641,7 +641,7 @@ static int flac_parse(AVCodecParserContext *s, AVCodecContext *avctx,
             read_end       = read_end + FFMIN(buf + buf_size - read_end,
                                               nb_desired * FLAC_AVG_FRAME_SIZE);
         }
-#if PAMP_CHANGES // Pamp change: ensure start/end are OK
+#if 0 && PAMP_CHANGES // Pamp change: ensure start/end are OK
         if(read_end < read_start) { // Pamp change
         	LOGE("%s read_end=%p read_start=%p", __FUNC__, read_end, read_start);
             goto handle_error;
@@ -679,7 +679,7 @@ static int flac_parse(AVCodecParserContext *s, AVCodecContext *avctx,
                                   read_end - read_start, NULL);
         } else {
             int8_t pad[MAX_FRAME_HEADER_SIZE] = { 0 };
-            av_fifo_generic_write(fpc->fifo_buf, pad, sizeof(pad), NULL);
+            av_fifo_generic_write(fpc->fifo_buf, pad, sizeof(pad), NULL); // REVISIT: crash in memcpy for some rare files
         }
 
         /* Tag headers and update sequences. */
