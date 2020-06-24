@@ -641,26 +641,28 @@ static int flac_parse(AVCodecParserContext *s, AVCodecContext *avctx,
             read_end       = read_end + FFMIN(buf + buf_size - read_end,
                                               nb_desired * FLAC_AVG_FRAME_SIZE);
         }
-#if 0 && PAMP_CHANGES // Pamp change: ensure start/end are OK
-        if(read_end < read_start) { // Pamp change
-        	LOGE("%s read_end=%p read_start=%p", __FUNC__, read_end, read_start);
-            goto handle_error;
-        }
-#endif
-#if !PAMP_CHANGES // Pamp change: some rare flac files may fail here, while being perfectly OK otherwise (855-not-played)
+#if PAMP_CHANGES
+        // Pamp change: some rare flac files may fail here, while being perfectly OK otherwise (855-not-played)
+        // These are with some image file which may be quite large and which is parsed as flac data here for some reason
+        if (!fpc->nb_headers_buffered && !av_fifo_space(fpc->fifo_buf) &&
+            av_fifo_size(fpc->fifo_buf) / FLAC_AVG_FRAME_SIZE >
+            fpc->nb_headers_buffered * 20) {
+#else
+        // Pamp change: some rare flac files may fail here, while being perfectly OK otherwise (855-not-played)
+        // These are with some image file which may be quite large and which is parsed as flac data here for some reason
         if (!av_fifo_space(fpc->fifo_buf) &&
             av_fifo_size(fpc->fifo_buf) / FLAC_AVG_FRAME_SIZE >
             fpc->nb_headers_buffered * 20) {
             /* There is less than one valid flac header buffered for 20 headers
              * buffered. Therefore the fifo is most likely filled with invalid
              * data and the input is not a flac file. */
-        	DLOG("%s FAIL 1 av_fifo_size=%d av_fifo_size/FLAC_AVG_FRAME_SIZE=%d nb_headers_buffered=%d", __FUNC__,
+#endif
+        	LOGE("%s FAIL 1 av_fifo_size=%d av_fifo_size/FLAC_AVG_FRAME_SIZE=%d nb_headers_buffered=%d", __FUNC__,
         			av_fifo_size(fpc->fifo_buf),
 					av_fifo_size(fpc->fifo_buf) / FLAC_AVG_FRAME_SIZE,
 					fpc->nb_headers_buffered);
             goto handle_error;
         }
-#endif
 
         /* Fill the buffer. */
         if (   av_fifo_space(fpc->fifo_buf) < read_end - read_start
@@ -759,7 +761,7 @@ static int flac_parse(AVCodecParserContext *s, AVCodecContext *avctx,
 handle_error:
     *poutbuf      = NULL;
     *poutbuf_size = 0;
-    DLOG("%s handle_error ret=%d", __FUNC__, buf_size ? read_end - buf : 0);
+    DLOG("%s handle_error ret=%d", __FUNC__, (int)(buf_size ? read_end - buf : 0));
     return buf_size ? read_end - buf : 0;
 }
 
@@ -769,7 +771,12 @@ static av_cold int flac_parse_init(AVCodecParserContext *c)
     fpc->pc = c;
     /* There will generally be FLAC_MIN_HEADERS buffered in the fifo before
        it drains.  This is allocated early to avoid slow reallocation. */
+#if PAMP_CHANGES
+    // Pamp change: increase initial fifo size so we better parse broken image/header cases (850-not-played)
+    fpc->fifo_buf = av_fifo_alloc_array(FLAC_MIN_HEADERS + 3 + 40, FLAC_AVG_FRAME_SIZE);
+#else
     fpc->fifo_buf = av_fifo_alloc_array(FLAC_MIN_HEADERS + 3, FLAC_AVG_FRAME_SIZE);
+#endif
     if (!fpc->fifo_buf) {
         av_log(fpc->avctx, AV_LOG_ERROR,
                 "couldn't allocate fifo_buf\n");

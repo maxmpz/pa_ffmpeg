@@ -3,7 +3,6 @@
 
 APP_OPTIM := release
 
-APP_DEBUGGABLE := false
 APP_PLATFORM := android-21
 
 APP_MODULES := libsoxr #libswresample # NOTE: this forces static lib build
@@ -13,12 +12,12 @@ APP_MODULES := libsoxr #libswresample # NOTE: this forces static lib build
 ifeq ($(APP_ABI),arm64-v8a)
 	NDK_TOOLCHAIN_VERSION := clang
 else
-#	ifneq (,$(findstring -r20,$(ANDROID_NDK)))
-#		# ndk-r20
-#		NDK_TOOLCHAIN_VERSION := clang
-#	else
-#		NDK_TOOLCHAIN_VERSION := 4.9
-#	endif
 	NDK_TOOLCHAIN_VERSION := clang
+endif
+
+ifneq (,$(ASAN)) # ASAN build
+$(info APP ASAN build)
+	APP_DEBUGGABLE := true # Old ndks
+	APP_DEBUG := true # r20
 endif
 

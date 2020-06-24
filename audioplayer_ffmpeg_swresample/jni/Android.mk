@@ -64,17 +64,22 @@ endif
 ifneq (,$(findstring clang,$(NDK_TOOLCHAIN_VERSION)))
 	PA_GLOBAL_CFLAGS += -fno-integrated-as
 	PA_GLOBAL_CFLAGS += -Wno-logical-op-parentheses -Wno-switch
-else
-
 endif
+
+ifneq (,$(ASAN)) 
+$(info ASAN build ==============================================)
+	PA_GLOBAL_CFLAGS += -fsanitize=address -fno-omit-frame-pointer 
+	PA_GLOBAL_LDFLAGS += -fsanitize=address
+endif
+
 
 ifeq ($(strip $(PA_GLOBAL_FLTO)),true)
 	PA_GLOBAL_CFLAGS += -flto
 endif
 
 ifeq ($(NDK_APP_DEBUGGABLE),true)
-$(warning NDK_APP_DEBUGGABLE for $(DIR_NAME))		
-	PA_GLOBAL_CFLAGS += -O0 
+$(info NDK_APP_DEBUGGABLE for $(DIR_NAME))		
+	PA_GLOBAL_CFLAGS += -Og -g
 else
 	PA_GLOBAL_CFLAGS += -ffunction-sections -fdata-sections 
 endif

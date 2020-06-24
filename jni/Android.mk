@@ -79,6 +79,12 @@ $(info Hard-floats)
 	endif
 endif
 
+ifneq (,$(ASAN)) 
+$(info ASAN build ==============================================)
+	PA_GLOBAL_CFLAGS += -fsanitize=address -fno-omit-frame-pointer -g
+	PA_GLOBAL_LDFLAGS += -fsanitize=address
+endif
+
 ifeq ($(PA_MIN_MODE),1)
 	PA_GLOBAL_CFLAGS += -DHAVE_PA_MIN_MODE=1
 endif
@@ -99,7 +105,7 @@ else
 endif
 
 ifeq ($(NDK_APP_DEBUGGABLE),true)
-$(warning NDK_APP_DEBUGGABLE for $(DIR_NAME))		
+$(info NDK_APP_DEBUGGABLE)		
 	PA_GLOBAL_CFLAGS += -Og 
 else
 	PA_GLOBAL_CFLAGS += -ffunction-sections -fdata-sections #-fvisibility=hidden - NOTE: fvisibility=hidden doesn't work for us, as it hides ALL the funcs, but we need some available 
@@ -186,10 +192,10 @@ endif
 
 
 ifeq ($(NDK_APP_DEBUGGABLE),true)
-$(warning NO_STRIP SO)		
+$(info NO_STRIP SO)		
 cmd-strip = echo
 else
-#$(warning NO_STRIP SO)
+#$(warning STRIPPING SO)
 #cmd-strip = echo
 
 
