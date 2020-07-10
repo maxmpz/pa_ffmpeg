@@ -679,7 +679,7 @@ static int flac_parse(AVCodecParserContext *s, AVCodecContext *avctx,
         if (buf && buf_size) {
             av_fifo_generic_write(fpc->fifo_buf, (void*) read_start,
                                   read_end - read_start, NULL);
-        } else {
+        } else if(av_fifo_space(fpc->fifo_buf) >= MAX_FRAME_HEADER_SIZE) { // Pamp change: add extra check for size
             int8_t pad[MAX_FRAME_HEADER_SIZE] = { 0 };
             av_fifo_generic_write(fpc->fifo_buf, pad, sizeof(pad), NULL); // REVISIT: crash in memcpy for some rare files
         }
