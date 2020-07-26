@@ -191,7 +191,8 @@ int ff_vorbis_comment(AVFormatContext *as, AVDictionary **m,
             } else if (!ogm_chapter(as, tt, ct)) {
                 updates++;
 #if PAMP_CONFIG_NO_TAGS // Begin PAMP change - skip everything unrelated to replaygain if PAMP_AVFMT_FLAG_SKIP_TAGS is set
-                if(!(as->flags & PAMP_AVFMT_FLAG_SKIP_TAGS) || (strncasecmp(tt, "replaygain_", 11) == 0 || strncasecmp(tt, "R128_TRACK_GAIN", 15) == 0)) {
+                if(!(as->flags & PAMP_AVFMT_FLAG_SKIP_TAGS) || (strncasecmp(tt, "replaygain_", 11) == 0
+                		|| strncasecmp(tt, "R128_", 5) == 0)) {
 #endif // End PAMP change
                 if (av_dict_get(*m, tt, NULL, 0)) {
                     av_dict_set(m, tt, ";", AV_DICT_APPEND);
