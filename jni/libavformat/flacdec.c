@@ -23,6 +23,7 @@
 #define LOG_TAG "af flacdec.c"
 #define DLOG(...) //__android_log_print(ANDROID_LOG_WARN,LOG_TAG,__VA_ARGS__)
 #define __FUNC__ __FUNCTION__
+#include <inttypes.h>
 
 #include "libavcodec/flac.h"
 #include "avformat.h"
@@ -211,7 +212,7 @@ static int flac_read_header(AVFormatContext *s)
         } else if (metadata_type == FLAC_METADATA_TYPE_SEEKTABLE) {
             const uint8_t *seekpoint = buffer;
             int i, seek_point_count = metadata_size/SEEKPOINT_SIZE;
-            DLOG("%s FLAC_METADATA_TYPE_SEEKTABLE", __FUNC__);
+            DLOG("%s FLAC_METADATA_TYPE_SEEKTABLE seek_point_count=%d", __FUNC__, seek_point_count);
             flac->found_seektable = 1;
             if ((s->flags&AVFMT_FLAG_FAST_SEEK)) {
                 for(i=0; i<seek_point_count; i++) {
@@ -219,6 +220,8 @@ static int flac_read_header(AVFormatContext *s)
                     int64_t pos = bytestream_get_be64(&seekpoint);
                     /* skip number of samples */
                     bytestream_get_be16(&seekpoint);
+                    DLOG("%s FLAC_METADATA_TYPE_SEEKTABLE av_add_index_entry pos=%" PRId64 " timestamp=%" PRId64, __FUNC__,
+                    		pos, timestamp);
                     av_add_index_entry(st, pos, timestamp, 0, 0, AVINDEX_KEYFRAME);
                 }
             }
@@ -419,7 +422,7 @@ static int flac_seek(AVFormatContext *s, int stream_index, int64_t timestamp, in
 
     index = av_index_search_timestamp(s->streams[0], timestamp, flags);
     if(index<0 || index >= s->streams[0]->nb_index_entries) {
-    	DLOG("%s seek FAIL #2", __FUNC__);
+    	DLOG("%s seek FAIL #2 index=%d nb_index_entries=%d", __FUNC__, index, s->streams[0]->nb_index_entries);
         return -1;
     }
 

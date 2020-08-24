@@ -42,6 +42,7 @@
 #include <android/log.h>
 #define LOG_TAG "flac_parser.c"
 #define DLOG(...) //__android_log_print(ANDROID_LOG_WARN,LOG_TAG,__VA_ARGS__)
+#define DLOG2(...) //__android_log_print(ANDROID_LOG_WARN,LOG_TAG,__VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
 #define __FUNC__ __FUNCTION__
 
@@ -96,6 +97,9 @@ typedef struct FLACParseContext {
     int wrap_buf_allocated_size;   /**< actual allocated size of the buffer   */
     FLACFrameInfo last_fi;         /**< last decoded frame header info        */
     int last_fi_valid;             /**< set if last_fi is valid               */
+#if PAMP_CHANGES // Pamp change: captured max_blocksize from file header STREAMINFO
+    int max_blocksize;
+#endif
 } FLACParseContext;
 
 static int frame_header_is_valid(AVCodecContext *avctx, const uint8_t *buf,
@@ -521,8 +525,14 @@ static int get_best_header(FLACParseContext* fpc, const uint8_t **poutbuf,
 			  DLOG("%s pts=>%" PRId64, __FUNC__, fpc->pc->pts);
 			}
 			else {
-			  fpc->pc->pts = header->fi.frame_or_sample_num * header->fi.blocksize;
-			  DLOG("%s #2 pts=>%" PRId64, __FUNC__, fpc->pc->pts);
+			  // NOTE: some files may have incorrect (smaller) blocksize here for the last block, even for fixed block size, causing us not
+		      // to calculate pts properly. Instead, let's use main streaminfo blocksize here
+			  // As parser technically can be used w/o decoder data, we use it only if it's available
+			  FLACContext *s = fpc->avctx->priv_data;
+			  int blocksize = fpc->max_blocksize > 0 ? fpc->max_blocksize : header->fi.blocksize;
+			  fpc->pc->pts = header->fi.frame_or_sample_num * blocksize;
+			  DLOG2("%s #2 fpc=%p avctx=%p frame_or_sample_num=%" PRId64 " fi.blocksize=%d blocksize=%d s=%p pts=>%" PRId64,
+					  __FUNC__, fpc, fpc->avctx, header->fi.frame_or_sample_num, header->fi.blocksize, blocksize, s, fpc->pc->pts);
 			}
     	}
     }
@@ -548,7 +558,25 @@ static int flac_parse(AVCodecParserContext *s, AVCodecContext *avctx,
     const uint8_t *read_end   = buf;
     const uint8_t *read_start = buf;
 
-    DLOG("%s buf_size=%d", __FUNC__, buf_size);
+    DLOG2("%s buf_size=%d avctx=%p avctx->priv_data=%p", __FUNC__, buf_size, avctx, avctx->priv_data);
+
+#if PAMP_CHANGES // Capture max_blocksize, as later we'll loose priv_data/FLACContext
+    if(!fpc->max_blocksize && avctx && avctx->extradata) {
+    	uint8_t *streaminfo;
+    	enum FLACExtradataFormat format;
+    	FLACStreaminfo flac_stream_info = {0};
+    	fpc->max_blocksize = -1; // Default is -1 == invalid
+
+    	if(ff_flac_is_extradata_valid(avctx, &format, &streaminfo)) {
+			if(ff_flac_parse_streaminfo(avctx, &flac_stream_info, streaminfo) >= 0) {
+				fpc->max_blocksize = flac_stream_info.max_blocksize > 0 ? flac_stream_info.max_blocksize : -1;
+			}
+    	}
+    	DLOG2("%s captured max_blocksize=%d", __FUNC__, fpc->max_blocksize);
+
+    } else if(!fpc->max_blocksize) DLOG2("%s FAIL #1 fpc->max_blocksize=%d avctx=%p avctx->priv_data=%p avctx->extradata=%p",
+    		__FUNC__, fpc->max_blocksize, avctx, avctx->priv_data, avctx->extradata);
+#endif
 
     if (s->flags & PARSER_FLAG_COMPLETE_FRAMES) {
         FLACFrameInfo fi;
@@ -564,17 +592,22 @@ static int flac_parse(AVCodecParserContext *s, AVCodecContext *avctx,
         }
         *poutbuf      = buf;
         *poutbuf_size = buf_size;
+        DLOG("%s PARSER_FLAG_COMPLETE_FRAMES =>buf_size=%d", __FUNC__, buf_size);
         return buf_size;
     }
 
     fpc->avctx = avctx;
-    if (fpc->best_header_valid)
+    if (fpc->best_header_valid) {
+    	DLOG("%s =>get_best_header", __FUNC__);
         return get_best_header(fpc, poutbuf, poutbuf_size);
+    }
 
     /* If a best_header was found last call remove it with the buffer data. */
     if (fpc->best_header && fpc->best_header->best_child) {
         FLACHeaderMarker *temp;
         FLACHeaderMarker *best_child = fpc->best_header->best_child;
+
+        DLOG("%s best_header 1", __FUNC__);
 
         /* Remove headers in list until the end of the best_header. */
         for (curr = fpc->headers; curr != best_child; curr = temp) {
@@ -606,6 +639,8 @@ static int flac_parse(AVCodecParserContext *s, AVCodecContext *avctx,
     } else if (fpc->best_header) {
         /* No end frame no need to delete the buffer; probably eof */
         FLACHeaderMarker *temp;
+
+        DLOG("%s best_header 2", __FUNC__);
 
         for (curr = fpc->headers; curr != fpc->best_header; curr = temp) {
             temp = curr->next;
@@ -648,8 +683,6 @@ static int flac_parse(AVCodecParserContext *s, AVCodecContext *avctx,
             av_fifo_size(fpc->fifo_buf) / FLAC_AVG_FRAME_SIZE >
             fpc->nb_headers_buffered * 20) {
 #else
-        // Pamp change: some rare flac files may fail here, while being perfectly OK otherwise (855-not-played)
-        // These are with some image file which may be quite large and which is parsed as flac data here for some reason
         if (!av_fifo_space(fpc->fifo_buf) &&
             av_fifo_size(fpc->fifo_buf) / FLAC_AVG_FRAME_SIZE >
             fpc->nb_headers_buffered * 20) {
@@ -677,10 +710,12 @@ static int flac_parse(AVCodecParserContext *s, AVCodecContext *avctx,
         DLOG("%s buf=%p buf_size=%d", __FUNC__, buf, buf_size);
 
         if (buf && buf_size) {
-            av_fifo_generic_write(fpc->fifo_buf, (void*) read_start,
+            DLOG("%s DATA =>av_fifo_generic_write size=%d", __FUNC__, (int)(read_end - read_start));
+        	av_fifo_generic_write(fpc->fifo_buf, (void*) read_start,
                                   read_end - read_start, NULL);
         } else if(av_fifo_space(fpc->fifo_buf) >= MAX_FRAME_HEADER_SIZE) { // Pamp change: add extra check for size
             int8_t pad[MAX_FRAME_HEADER_SIZE] = { 0 };
+            DLOG("%s PAD =>av_fifo_generic_write", __FUNC__);
             av_fifo_generic_write(fpc->fifo_buf, pad, sizeof(pad), NULL); // REVISIT: crash in memcpy for some rare files
         }
 
@@ -693,6 +728,7 @@ static int flac_parse(AVCodecParserContext *s, AVCodecContext *avctx,
         if (nb_headers < 0) {
             av_log(avctx, AV_LOG_ERROR,
                    "find_new_headers couldn't allocate FLAC header\n");
+            DLOG("%s FAIL 3 find_new_headers couldn't allocate FLAC header", __FUNC__);
             goto handle_error;
         }
 
@@ -703,6 +739,7 @@ static int flac_parse(AVCodecParserContext *s, AVCodecContext *avctx,
                 read_start = read_end;
                 continue;
             } else {
+            	DLOG("%s FAIL 4", __FUNC__);
                 goto handle_error;
             }
         }

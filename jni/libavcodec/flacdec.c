@@ -47,7 +47,13 @@
 #include "thread.h"
 #include "unary.h"
 
+#include <android/log.h>
+#define LOG_TAG "ac flacdec.c"
+#define DLOG(...) __android_log_print(ANDROID_LOG_WARN,LOG_TAG,__VA_ARGS__)
+#define __FUNC__ __FUNCTION__
+#include <inttypes.h>
 
+#if !PAMP_CHANGES // Pamp change: moved to flac.h
 typedef struct FLACContext {
     AVClass *class;
     struct FLACStreaminfo flac_stream_info;
@@ -67,6 +73,7 @@ typedef struct FLACContext {
 
     FLACDSPContext dsp;
 } FLACContext;
+#endif
 
 static int allocate_buffers(FLACContext *s);
 
