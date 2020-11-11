@@ -13,5 +13,5 @@
 #		include "avconfig-neon.h"
 #	endif
 #else
-	#error Unknown config!
+	#error
 #endif

@@ -158,8 +158,12 @@ $FFMPEG_PATH/configure --target-os=linux \
 --disable-faan \
 --disable-lzo \
 --disable-parser=dirac \
+--disable-swresample \
+--disable-swscale \
 \
 --enable-version3 \
+--enable-rdft \
+--enable-avutil \
 \
 " 
 
