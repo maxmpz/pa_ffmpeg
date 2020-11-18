@@ -1,15 +1,14 @@
 #!/bin/bash
 
-if [[ $1 != 'arm64' && $1 != 'neon' && $1 != 'neon-hard' && $1 != 'arm64-min' ]] ; then
-    echo "Usage: build-all.sh arm64|neon|neon-hard|arm64-min"
+if [[ $1 != 'arm64' && $1 != 'neon' && $1 != 'neon-hard' && $1 != 'arm64-min'  && $1 != 'neon-hard-min' ]] ; then
+    echo "Usage: build-all.sh arm64|neon|neon-hard|arm64-min|neon-hard-min"
     echo
     exit 1
 fi
 
 CMD=./build-$1.sh
 
-echo Building everything for libffmpeg_neon.so target=$1
-
+echo Building mbedtls target=$1
 pushd ../mbedtls
 $CMD
 res=$?

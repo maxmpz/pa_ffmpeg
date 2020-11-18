@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export ANDROID_NDK=/opt/android-ndk-r21d
+export ANDROID_NDK=/opt/android-ndk-r21e
 
 echo Using ANDROID_NDK=$ANDROID_NDK
 
