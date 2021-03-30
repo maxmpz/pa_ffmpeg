@@ -128,6 +128,7 @@ int av_fifo_generic_write(AVFifoBuffer *f, void *src, int size,
 
     do {
         int len = FFMIN(f->end - wptr, size);
+        len = FFMAX(len, 0); // MaxMP: ensure len is not < 0, crushing stuff
         if (func) {
             len = func(src, wptr, len);
             if (len <= 0)
@@ -135,7 +136,7 @@ int av_fifo_generic_write(AVFifoBuffer *f, void *src, int size,
         } else {
         	av_assert0(wptr); // MaxMP: let's check those
         	av_assert0(src);
-        	av_assert0(len > 0);
+        	av_assert0(len >= 0);
             memcpy(wptr, src, len);
             src = (uint8_t *)src + len;
         }
