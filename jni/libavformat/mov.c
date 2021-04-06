@@ -5748,7 +5748,7 @@ static int mov_read_uuid(MOVContext *c, AVIOContext *pb, MOVAtom atom)
     if (atom.size < sizeof(uuid) || atom.size >= FFMIN(INT_MAX, SIZE_MAX))
         return AVERROR_INVALIDDATA;
 
-    if (c->fc->nb_streams < 1)
+    if (!c->fc || c->fc->nb_streams < 1) // Pamp change: extra check for c->fc
         return 0;
     st = c->fc->streams[c->fc->nb_streams - 1];
     sc = st->priv_data;
