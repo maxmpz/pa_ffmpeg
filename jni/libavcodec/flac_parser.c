@@ -557,6 +557,7 @@ static int flac_parse(AVCodecParserContext *s, AVCodecContext *avctx,
     int nb_headers;
     const uint8_t *read_end   = buf;
     const uint8_t *read_start = buf;
+    int8_t pad[MAX_FRAME_HEADER_SIZE] = { 0 }; // MaxMP: pad moved outside inner blocks
 
     DLOG2("%s buf_size=%d avctx=%p avctx->priv_data=%p", __FUNC__, buf_size, avctx, avctx->priv_data);
 
@@ -714,9 +715,9 @@ static int flac_parse(AVCodecParserContext *s, AVCodecContext *avctx,
         	av_fifo_generic_write(fpc->fifo_buf, (void*) read_start,
                                   read_end - read_start, NULL);
         } else if(av_fifo_space(fpc->fifo_buf) >= MAX_FRAME_HEADER_SIZE) { // Pamp change: add extra check for size
-            int8_t pad[MAX_FRAME_HEADER_SIZE] = { 0 };
+            //int8_t pad[MAX_FRAME_HEADER_SIZE] = { 0 }; // MaxMP: moved to top
             DLOG("%s PAD =>av_fifo_generic_write", __FUNC__);
-            av_fifo_generic_write(fpc->fifo_buf, pad, sizeof(pad), NULL); // REVISIT: crash in memcpy for some rare files
+            av_fifo_generic_write(fpc->fifo_buf, pad, sizeof(pad), NULL); // NOTE: crash in memcpy due to pad being NULL
         }
 
         /* Tag headers and update sequences. */

@@ -135,9 +135,11 @@ int av_fifo_generic_write(AVFifoBuffer *f, void *src, int size,
                 break;
         } else {
         	av_assert0(wptr); // MaxMP: let's check those
-        	av_assert0(src);
+        	av_assert1(src); // MaxMP: src is NULL when called from flac_parser.c
         	av_assert0(len >= 0);
-            memcpy(wptr, src, len);
+        	if(src) {
+        		memcpy(wptr, src, len);
+        	}
             src = (uint8_t *)src + len;
         }
 // Write memory barrier needed for SMP here in theory
