@@ -10,6 +10,7 @@ static const AVCodec * const codec_list[] = {
     &ff_dsd_lsbf_planar_decoder,
     &ff_dsd_msbf_planar_decoder,
     &ff_dst_decoder,
+    &ff_eac3_decoder,
     &ff_flac_decoder,
     &ff_g723_1_decoder,
     &ff_g729_decoder,

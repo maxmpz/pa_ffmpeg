@@ -232,6 +232,7 @@ $FFMPEG_PATH/configure --target-os=linux \
 --enable-decoder=truehd \
 --enable-decoder=dca \
 --enable-decoder=ac3 \
+--enable-decoder=eac3 \
 \
 --enable-parser=opus \
 --enable-parser=flac \
