@@ -49,7 +49,7 @@
 
 #include <android/log.h>
 #define LOG_TAG "ac flacdec.c"
-#define DLOG(...) __android_log_print(ANDROID_LOG_WARN,LOG_TAG,__VA_ARGS__)
+#define DLOG(...) //__android_log_print(ANDROID_LOG_WARN,LOG_TAG,__VA_ARGS__)
 #define __FUNC__ __FUNCTION__
 #include <inttypes.h>
 

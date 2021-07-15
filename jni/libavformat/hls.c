@@ -46,7 +46,7 @@
 
 #include <android/log.h>
 #define LOG_TAG "hls.c"
-#define DLOG(...) __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
+#define DLOG(...) //__android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
 #define __FUNC__ __FUNCTION__
 
 #define INITIAL_BUFFER_SIZE 32768
