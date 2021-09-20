@@ -38,8 +38,8 @@ static void decorrelate_stereo(int32_t *buffer[2], int nb_samples,
     const int cdecorr_left_weight = decorr_left_weight;
     const int cdecorr_shift = decorr_shift;
 
-    #pragma clang loop vectorize_width(4)
-	#pragma clang loop interleave(enable)
+    //#pragma clang loop vectorize_width(4) // NOTE: fails to vectorize thus failing lto build
+	//#pragma clang loop interleave(enable)
     #pragma clang loop unroll_count(16)
 
     for (i = 0; i < cnb_samples; i++) {

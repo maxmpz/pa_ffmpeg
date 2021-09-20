@@ -86,17 +86,17 @@ static int flac_read_header(AVFormatContext *s)
         	avio_seek(s->pb, 4, SEEK_CUR); // picture type
 
         	unsigned mimeSize = avio_rb32(s->pb);
-        	if(mimeSize >= 0) {
+        	if(mimeSize > 0) {
         		avio_seek(s->pb, mimeSize, SEEK_CUR);
         	}
         	unsigned descSize = avio_rb32(s->pb);
-        	if(descSize >= 0) {
+        	if(descSize > 0) {
         		avio_seek(s->pb, descSize, SEEK_CUR);
         	}
         	avio_seek(s->pb, 4 * 4, SEEK_CUR); // w, h, color depth, index colors
 
         	unsigned imgSize = avio_rb32(s->pb);
-        	if(imgSize >= 0) {
+        	if(imgSize > 0) {
         		DLOG("%s imgSize=%u metadata_size=%d", __FUNC__, imgSize, metadata_size);
         		avio_seek(s->pb, imgSize, SEEK_CUR);
         	}

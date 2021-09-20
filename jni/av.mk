@@ -6,14 +6,12 @@ DIR_NAME := $(notdir $(basename $(LOCAL_PATH)))
 # FFMPEG_LOCAL_PATH => ../ffmpeg/libavcodec, etc.
 FFMPEG_LOCAL_PATH := $(FFMPEG_ROOT)/$(DIR_NAME)
 
-SUBDIR := $(FFMPEG_LOCAL_PATH)/
-
 ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
-	ifeq ($(PA_MIN_MODE),1)
-		include ffbuild/config-arm64-min.mak
-	else
-		include ffbuild/config-arm64.mak
-	endif
+    ifeq ($(PA_MIN_MODE),1)
+        include ffbuild/config-arm64-min.mak
+    else
+        include ffbuild/config-arm64.mak
+    endif
 
 else ifneq (,$(findstring armeabi-v7a, $(TARGET_ARCH_ABI)))
 include ffbuild/config-neon.mak
@@ -49,19 +47,19 @@ endif
 OBJS += $(OBJS-yes)
 
 ifeq ($(HAVE_ARMV5TE),yes)
-	OBJS += $(ARMV5TE-OBJS) $(ARMV5TE-OBJS-yes)
+    OBJS += $(ARMV5TE-OBJS) $(ARMV5TE-OBJS-yes)
 endif
 ifeq ($(HAVE_ARMV6),yes)
-	OBJS += $(ARMV6-OBJS) $(ARMV6-OBJS-yes)
+    OBJS += $(ARMV6-OBJS) $(ARMV6-OBJS-yes)
 endif
 ifeq ($(HAVE_VFP),yes)
-	OBJS += $(VFP-OBJS) $(VFP-OBJS-yes) 
+    OBJS += $(VFP-OBJS) $(VFP-OBJS-yes)
 endif
 ifeq ($(HAVE_NEON),yes)
-	OBJS += $(NEON-OBJS) $(NEON-OBJS-yes)
+    OBJS += $(NEON-OBJS) $(NEON-OBJS-yes)
 endif
 ifeq ($(HAVE_ARMV8),yes)
-	OBJS += $(ARMV8-OBJS) $(ARMV8-OBJS-yes)
+    OBJS += $(ARMV8-OBJS) $(ARMV8-OBJS-yes)
 endif
 
 
@@ -69,11 +67,11 @@ FFNAME := lib$(NAME)
 FFLIBS := $(foreach,NAME,$(FFLIBS),lib$(NAME))
 
 LOCAL_CFLAGS +=  \
-	-Wno-sign-compare -Wno-switch -Wno-pointer-sign \
-	-Wno-format -Wno-deprecated-declarations -Wno-cast-qual \
-	-Wno-parentheses  \
-	
-#	-Wno-incompatible-pointer-types -Wno-logical-op-parentheses -Wno-asm-operand-widths -Wno-unknown-warning-option  
+    -Wno-sign-compare -Wno-switch -Wno-pointer-sign \
+    -Wno-format -Wno-deprecated-declarations -Wno-cast-qual \
+    -Wno-parentheses  \
+
+#    -Wno-incompatible-pointer-types -Wno-logical-op-parentheses -Wno-asm-operand-widths -Wno-unknown-warning-option
   
 ifneq ($(PA_GLOBAL_APPLY_FFMPEG_OPTS),true)
 LOCAL_OBJS_TO_REMOVE := 

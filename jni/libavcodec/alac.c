@@ -331,7 +331,7 @@ static int decode_element(AVCodecContext *avctx, AVFrame *frame, const int ch_in
         }
 
         if (alac->extra_bits) {
-            #pragma clang loop unroll_count(8) distribute(enable) vectorize(assume_safety)
+            //#pragma clang loop unroll_count(8) distribute(enable) vectorize(assume_safety)
         	for (i = 0; i < nb_samples; i++) {
                 if(get_bits_left(&alac->gb) <= 0)
                     return AVERROR_INVALIDDATA;
@@ -369,7 +369,7 @@ static int decode_element(AVCodecContext *avctx, AVFrame *frame, const int ch_in
         }
     } else {
         /* not compressed, easy case */
-    	#pragma clang loop unroll_count(8) distribute(enable) vectorize(assume_safety)
+    	//#pragma clang loop unroll_count(8) distribute(enable) vectorize(assume_safety)
         for (i = 0; i < nb_samples; i++) {
             if(get_bits_left(&alac->gb) <= 0)
                 return AVERROR_INVALIDDATA;
@@ -404,7 +404,7 @@ static int decode_element(AVCodecContext *avctx, AVFrame *frame, const int ch_in
     }
     switch(alac->sample_size) {
     case 16: {
-        #pragma clang loop unroll_count(2) distribute(enable) vectorize(assume_safety)
+        //#pragma clang loop unroll_count(2) distribute(enable) vectorize(assume_safety)
         for (ch = 0; ch < channels; ch++) {
             int16_t * __restrict__ outbuffer = (int16_t *)frame->extended_data[ch_index + ch];
             for (i = 0; i < nb_samples; i++)
@@ -412,14 +412,14 @@ static int decode_element(AVCodecContext *avctx, AVFrame *frame, const int ch_in
         }}
         break;
     case 20: {
-    	#pragma clang loop unroll_count(2) distribute(enable) vectorize(assume_safety)
+    	//#pragma clang loop unroll_count(2) distribute(enable) vectorize(assume_safety)
         for (ch = 0; ch < channels; ch++) {
             for (i = 0; i < nb_samples; i++)
                 alac->output_samples_buffer[ch][i] <<= 12;
         }}
         break;
     case 24: {
-    	#pragma clang loop distribute(enable) vectorize(assume_safety)
+    	//#pragma clang loop distribute(enable) vectorize(assume_safety)
         for (ch = 0; ch < channels; ch++) {
             for (i = 0; i < nb_samples; i++)
                 alac->output_samples_buffer[ch][i] <<= 8;

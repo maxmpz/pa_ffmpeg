@@ -7,54 +7,52 @@ include $(LOCAL_PATH)/../av.mk
 
 LOCAL_SRC_FILES := $(FFFILES)
 
-LIBSOXR_PATH := $(LOCAL_PATH)/../../audioplayer_ffmpeg_swresample/jni/libsoxr
 
-# NOTE: important to have ../../jni first to look for overriden headers, such as ffversion.h
-LOCAL_C_INCLUDES :=		\
-	$(LIBSOXR_PATH) \
-	$(LIBSOXR_PATH)/soxr-0.1.3/src \
-	$(LOCAL_PATH)		\
-	$(LOCAL_PATH)/..	\
-	$(FFMPEG_LOCAL_PATH)		\
-	$(FFMPEG_LOCAL_PATH)/.. \
-	
+# NOTE: important to have ../../jni first to look for overridden headers, such as ffversion.h
+LOCAL_C_INCLUDES :=        \
+    $(libsoxr_PATH) \
+    $(libsoxr_PATH)/soxr-0.1.3/src \
+    $(LOCAL_PATH)        \
+    $(LOCAL_PATH)/..    \
+    $(FFMPEG_LOCAL_PATH)        \
+    $(FFMPEG_LOCAL_PATH)/.. \
 
-LOCAL_CFLAGS = $(PA_GLOBAL_CFLAGS)
-# NOTE: for best perormance, swresample requires quite specific flags
-	
+LOCAL_CFLAGS := $(PA_GLOBAL_CFLAGS)
+
+LOCAL_CFLAGS += -fno-stack-protector
+
 ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
-	# NOTE: gcc seems to be better for arm64 + disabled arm64 asm opts for resampler
-	# clang r20 seems to be slightly better with neon asm
-	LOCAL_CFLAGS += -Ofast #-DPAMP_DISABLE_NEON_ASM
-	ifneq (,$(findstring clang,$(NDK_TOOLCHAIN_VERSION))) # clang
-		LOCAL_CFLAGS += -fno-vectorize
-		LOCAL_CFLAGS += -Wno-logical-op-parentheses -Wno-switch
-	else # gcc
-		# NOTE: not using gcc now 	
-	endif
-	
+    ifneq (,$(findstring clang,$(NDK_TOOLCHAIN_VERSION))) # clang
+        # Best for ndk-23
+        LOCAL_CFLAGS += -DPAMP_DISABLE_NEON_ASM
+        LOCAL_CFLAGS += -Ofast
+        LOCAL_CFLAGS += -Wno-logical-op-parentheses -Wno-switch
+    endif
 else ifneq (,$(findstring armeabi-v7a,$(TARGET_ARCH_ABI)))
-	LOCAL_CFLAGS += -O2 
-	#LOCAL_CFLAGS += -DPAMP_DISABLE_NEON_ASM # NOTE: sligtly worse vs arm neon optimized, much worse for clang
-	LOCAL_CFLAGS += -mtune=cortex-a53
-	LOCAL_CFLAGS += -ftree-vectorize -funroll-loops #-funroll-all-loops
-	LOCAL_CFLAGS += -fno-stack-protector
-
-	ifneq (,$(findstring clang,$(NDK_TOOLCHAIN_VERSION))) # clang
-	else # gcc
-	endif
+    ifneq (,$(findstring clang,$(NDK_TOOLCHAIN_VERSION))) # clang
+        LOCAL_CFLAGS += -Ofast
+    else # gcc
+        LOCAL_CFLAGS += -O2
+        LOCAL_CFLAGS += -mtune=cortex-a53
+        LOCAL_CFLAGS += -ftree-vectorize -funroll-loops #-funroll-all-loops
+    endif
 endif
  
+#$(error $(LOCAL_CFLAGS))
+
 LOCAL_ARM_MODE := arm
 
 LOCAL_STATIC_LIBRARIES := $(FFLIBS)
 
 LOCAL_MODULE := $(FFNAME)
 
-ifeq ($(PA_GLOBAL_FLTO),true)
-	ifeq (,$(findstring -flto, $(LOCAL_CFLAGS)))
-$(error No -flto in LOCAL_CFLAGS=$(LOCAL_CFLAGS)) 	
-	endif
+ifeq (,$(findstring -O, $(LOCAL_CFLAGS))) # Check for optimization flag
+    $(error No -Ox in LOCAL_CFLAGS=$(LOCAL_CFLAGS))
+endif
+ifneq (false,$(PA_GLOBAL_FLTO)) # NOTE: PA_GLOBAL_FLTO can be false,full,thin
+    ifeq (,$(findstring -flto, $(LOCAL_CFLAGS)))
+        $(error No -flto in LOCAL_CFLAGS=$(LOCAL_CFLAGS))
+    endif
 endif
 
 

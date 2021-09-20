@@ -17,6 +17,10 @@
 #else
 	#error
 #endif
+#ifdef PAMP_DISABLE_AS_FUNC
+#   undef HAVE_AS_FUNC // Needed to properly support clang integrated-as
+#   define HAVE_AS_FUNC 0
+#endif
 
 #ifndef PAMP_FFMPEG_CONFIGURATION // This one should be provided by Android.mk
 #define PAMP_FFMPEG_CONFIGURATION ""

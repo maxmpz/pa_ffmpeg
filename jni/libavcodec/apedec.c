@@ -1,6 +1,7 @@
 #if PAMP_OPTIMIZE_MACROS
+#ifndef __clang__
 #pragma GCC optimize ("O2")
-//#pragma GCC optimize ("-ftree-vectorize")
+#endif
 #endif
 
 #if PAMP_CHANGES
