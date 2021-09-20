@@ -1,0 +1,33 @@
+plugins {
+    id 'com.android.library'
+}
+
+android {
+    compileSdk 30
+    buildToolsVersion "31.0.0"
+
+    defaultConfig {
+        minSdk 21
+        targetSdk 30
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+}
+
+tasks.register("build_FFmpeg_arm64", Exec) {
+    workingDir 'jni'
+
+    commandLine './build-arm64.sh'
+}
+

@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-      package="com.maxmpz.audioplayer"
+      package="com.maxmpz.audioplayer_ffmpeg"
       android:versionCode="1" android:versionName="1.1" xmlns:tools="http://schemas.android.com/tools">
 
+      <!-- NOTE: needed for ndk building, which may parse AndroidManifest.xml. REVISIT: check if this is still needed -->
       <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="21" tools:ignore="OldTargetApi"/>
 </manifest> 
