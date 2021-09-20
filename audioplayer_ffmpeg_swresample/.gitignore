@@ -1,6 +1,0 @@
-/*.DS_Store
-gen/*.d
-bin/**
-obj/**
-libs/**
-*.pc
