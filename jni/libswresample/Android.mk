@@ -37,7 +37,8 @@ else ifneq (,$(findstring armeabi-v7a,$(TARGET_ARCH_ABI)))
         LOCAL_CFLAGS += -ftree-vectorize -funroll-loops #-funroll-all-loops
     endif
 endif
- 
+
+LOCAL_CFLAGS += $(PA_GLOBAL_OVERRIDE_CFLAGS)
 #$(error $(LOCAL_CFLAGS))
 
 LOCAL_ARM_MODE := arm
