@@ -25,7 +25,7 @@ $ ./build-neon.sh
 $ cd ../../jni
 $ ./build-neon.sh
 
-Poweramp has "overriden" c/S files in /jni. Still, .h files can't be overriden this way, thus, they are kept both in jni and should be copied over the ffmpeg tree
+Poweramp has "overridden" c/S files in /jni. Still, .h files can't be overriden this way, thus, they are kept both in jni and should be copied over the ffmpeg tree
 FFmpeg configure basically works as intended, except external libraries detection (doesn't work currently, no pkg-config in ndk and/or it seems that crosscompile libs
 not necessarily easily configured this way anyway). External library config variables are enabled in per-build config scripts (config.h/config.mak from config-pamp.h/config-pamp.mak).
 

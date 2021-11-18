@@ -111,18 +111,18 @@ OVERRIDE_S_FILES := $(addprefix $(ARCH)/, $(notdir $(OVERRIDE_FILES)))
 OVERRIDE_C_FILES := $(notdir $(wildcard $(LOCAL_PATH)/*.c)) $(addprefix $(ARCH)/, $(notdir $(wildcard $(LOCAL_PATH)/$(ARCH)/*.c)))
 OVERRIDE_S_FILES := $(addprefix $(ARCH)/, $(notdir $(wildcard $(LOCAL_PATH)/$(ARCH)/*.S)))
 
-# These are just the overriden files which were also in C_FILES
+# These are just the overridden files which were also in C_FILES
 OVERRIDE_C_FILES := $(sort $(filter $(OVERRIDE_C_FILES),$(C_FILES)))
 OVERRIDE_S_FILES := $(sort $(filter $(OVERRIDE_S_FILES),$(S_FILES)))
 
-# These are just C_FILES without the overriden files
+# These are just C_FILES without the overridden files
 C_FILES := $(filter-out $(OVERRIDE_C_FILES),$(C_FILES))
 S_FILES := $(filter-out $(OVERRIDE_S_FILES),$(S_FILES))
 
 # This is path FROM ffmpeg dir INTO override dir inside jni
 RELATIVE_PATH_FOR_OVERRIDE := ../../jni/$(DIR_NAME)
 
-# Now just add relative path prefix for overriden files and add to other file
+# Now just add relative path prefix for overridden files and add to other file
 FFFILES := $(addprefix $(RELATIVE_PATH_FOR_OVERRIDE)/, $(OVERRIDE_S_FILES)) $(addprefix $(RELATIVE_PATH_FOR_OVERRIDE)/, $(OVERRIDE_C_FILES)) $(sort $(S_FILES)) $(sort $(C_FILES))
 FFFILES := $(addprefix ../$(FFMPEG_ROOT)/$(DIR_NAME)/, $(FFFILES))
 

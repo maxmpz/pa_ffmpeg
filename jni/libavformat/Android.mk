@@ -9,7 +9,7 @@ include $(LOCAL_PATH)/../av.mk
 LOCAL_SRC_FILES := $(FFFILES) 
 
 # Important: keep LOCAL_PATH paths above ffmpeg path to ensure it overrides sources/headers
-# NOTE: local headers (e.g. libavformat/replaygain.h for libavformat/mov.c) can't be overriden this way, so appropriate c file override is needed) 
+# NOTE: local headers (e.g. libavformat/replaygain.h for libavformat/mov.c) can't be overridden this way, so appropriate c file override is needed)
 LOCAL_C_INCLUDES :=        \
     $(LOCAL_PATH)        \
     $(LOCAL_PATH)/..    \
