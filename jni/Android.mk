@@ -73,7 +73,9 @@ ifeq ($(TARGET_ARCH_ABI),arm64-v8a) # clang implied
 
 else ifneq (,$(findstring armeabi-v7a, $(TARGET_ARCH_ABI)))
     PA_GLOBAL_CFLAGS += -march=armv7-a
-    PA_GLOBAL_CFLAGS += -mfpu=neon-vfpv4
+    #PA_GLOBAL_CFLAGS += -mfpu=neon
+    PA_GLOBAL_CFLAGS += -mfpu=neon-vfpv3
+    #PA_GLOBAL_CFLAGS += -mfpu=neon-vfpv4
     PA_GLOBAL_CFLAGS += -DHAVE_NEON=1
     PA_GLOBAL_CFLAGS += -Os
 
@@ -266,7 +268,7 @@ endif
 LOCAL_STRIP_ARGS := -g -S -d --strip-debug --strip-unneeded --discard-all -R .comment -R .gnu.version
 
 # NOTE: cmd-strip is expanded later, so we pass $1 there, not in $(LOCAL_STRIP_ARGS) where it will expand right now instead
-ifeq (23,$(PA_NDK_VERSION_MAJOR))
+ifneq (,$(call gte,$(PA_NDK_VERSION_MAJOR),23))
     cmd-strip = $(LLVM_TOOLCHAIN_PREFIX)llvm-strip $(LOCAL_STRIP_ARGS) $1
 else
     cmd-strip = $(TOOLCHAIN_PREFIX)strip $(LOCAL_STRIP_ARGS) $1
