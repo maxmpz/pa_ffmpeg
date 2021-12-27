@@ -90,7 +90,8 @@ else ifneq (,$(findstring armeabi-v7a, $(TARGET_ARCH_ABI)))
     endif
 
     ifneq (,$(findstring clang,$(NDK_TOOLCHAIN_VERSION))) # clang
-        PA_GLOBAL_CFLAGS += -mcpu=krait
+        #PA_GLOBAL_CFLAGS += -mcpu=krait
+        PA_GLOBAL_CFLAGS += -mcpu=cortex-a9 -mtune=krait
 
     else # gcc
         PA_GLOBAL_CFLAGS += -mtune=cortex-a9
